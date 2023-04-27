@@ -1,0 +1,391 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Roboto", sans-serif;
+
+    --light-gray: rgb(139, 139, 139);
+    --dark-gray: rgb(95, 95, 95);
+    --light-yellow: #ffcc32;
+    --light-orange:#ffa50f;
+    --orange:#f58410;
+    --dark-orange:rgb(184, 111, 33);
+    
+    --translucent-white: rgba(255, 255, 255, 0.7);
+
+    --normal-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    --blur-filter: blur(8px);
+
+    --main-orange-color: #f08923;
+    --heavy-grey: #7a7a7a;
+    --light-grey: #cdcdcd;
+    --background-white: #ffffff;
+    --transparent-white: rgba(255, 255, 255, 0.7);
+    --text-color-white: #ffffff;
+    --text-color-grey: #54595F;
+    --text-color-black: black;
+}
+
+html{
+  height: 100vh;
+}
+
+header {
+    color: var(--light-gray);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid gray;
+    margin: auto;
+    text-align: center;
+}
+
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+label{
+  z-index:999;
+}
+
+/* From uiverse.io */
+.button {
+    padding: 0.7rem;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #000;
+    background: var(--translucent-white);
+    border: none;
+    border-radius: 45px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.2);
+}
+  
+.button:hover {
+    background-color: var(--light-blue);
+    box-shadow: 0px 15px 20px rgba(46, 104, 229, 0.4);
+    background-color: var(--light-orange);
+    color: #fff;
+    fill: #fff;
+    transform: translateY(-7px);
+}
+  
+.button:active {
+    transform: translateY(-1px);
+}
+
+/*contenedor general*/
+.app {
+    display: flex;
+    height: 100vh;
+    border: 1px solid var(--heavy-grey);
+    position: relative; /* Set container position as relative */
+    overflow: hidden;
+}
+
+.barra-lateral {
+    background-color: #ffcc32;
+    width: 3.5 rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--heavy-grey);
+    position: absolute;
+    top: 0;
+    right: 0;
+    /* justify-content: center; */
+}
+  
+
+.toolbar {
+  padding: 5px;
+  padding-top: 50px;
+}
+
+.toolbar a.button svg {
+  vertical-align: middle;
+}
+.toolbar a.button {
+  margin-top: 5px; /* ajusta el valor según sea necesario */
+}
+
+canvas {
+  flex: 1;
+  height: 100%;
+  width: calc(100% - 4rem);
+}
+
+/* From uiverse.io */
+.button-barra-lateral {
+    padding: 0.7rem;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #000;
+    background: var(--translucent-white);
+    border: 1px solid var(--heavy-grey);
+    border-radius: 5px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    margin-top: 20px; 
+}
+
+
+.active{
+  padding: 0.7rem;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  font-weight: 500;
+  color: #000;
+  background: var(--orange) ;
+  border: 1px solid var(--heavy-grey);
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  margin-top: 5px; 
+}
+
+.activo {
+  padding: 0.7rem;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  font-weight: 500;
+  color: #000 !important;
+  background: var(--orange) !important;
+  border: 1px solid var(--heavy-grey);
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-top: 5px; 
+  text-align: center !important;
+}
+.button-carga-ifc {
+  padding: 0.7rem;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  font-weight: 500;
+  color: #000;
+  background: var(--light-orange);
+  border: 1px solid var(--heavy-grey);
+  border-radius: 10px;
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  width: 80px;
+  height: 40px;
+  margin: 5px; 
+  text-align: center;
+}
+
+#loader-button {
+  position: fixed;
+  top: 5px; /* ajusta la posición vertical */
+  left: 5px; /* ajusta la posición horizontal */
+  z-index: 999;
+}
+
+/*contenedor botones de planos*/
+#button-container {
+  position: fixed;
+  top: 100px; /* ajusta la posición vertical */
+  left: 20px; /* ajusta la posición horizontal */
+  z-index: 999;
+  width: 50px;
+  height: 50px;
+  visibility: hidden;
+}
+
+#botonImportar{
+  position: fixed;
+  top: 80px; /* ajusta la posición vertical */
+  left: 20px; /* ajusta la posición horizontal */
+  z-index: 999;
+  width: 50px;
+  height: 50px;
+  border-radius: 2px !important;
+  visibility: hidden;
+}
+
+#button-container button{
+  border: 1px solid var(--light-grey);
+  background: white;
+  border-color: var(--dark-orange);
+  color:var(--dark-orange);
+  border-radius: 25px;
+  margin: 0.2rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  width: 8rem;
+  transition: width 0.2s ease-in-out;
+}
+#file-input{
+  visibility: collapse;
+  visibility: hidden;
+  position: absolute;
+}
+
+#file-name {
+  position: absolute;
+  top: 10px;
+  left: 90px;
+  z-index: 999;
+  padding: 10px;
+  color:var(--dark-orange);
+  background-color:white;
+  border-color: 1px solid var(--dark-orange);
+  border-radius: 5px;
+  display :none;
+}
+
+#importCSV{
+  visibility: collapse;
+  visibility: hidden;
+  position: absolute;
+}
+
+#divNumCamiones {
+  position: fixed;
+  bottom: 0%;
+  left: 10%;
+  height: auto;
+  width: 80%; 
+  padding: 5px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box; /*incluye el ancho del borde y del relleno en el ancho y alto */
+  white-space: nowrap; /* Evita que los botones se muevan */
+  border: 1px solid transparent; /* Agregar borde transparente para que el div mantenga su tamaño cuando los botones cambian su apariencia */
+  overflow-x: auto;
+  z-index:9999;
+}
+
+.btnNumCamion {
+  padding: 10px;
+  margin:5px;;
+  background-color: rgba(110, 109, 109, 0.5);
+  color: white;
+  border-radius: 5px;
+  font-size: 20px;
+  min-width: 40px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* centra el contenido vertical y horizontalmente */
+}
+.btnNumCamion.active {
+  border: 2px solid red !important; 
+  color:red !important;
+}
+
+#divNumCamion{
+  position :absolute;
+  top : 40px;
+  left : 50%;
+  transform : translate(-50%, 0);
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 20px;
+  justify-content: flex-start;
+}
+
+.btnNumCamion:hover {
+  background-color: rgb(116, 116, 116);  
+  transition: background-color 0.3s ease;
+}
+.btnNumCamion i {
+  
+  font-size: 100%;
+}
+/* .button-barra-lateral:hover {
+    background-color: var(--light-blue) !important;
+    box-shadow: 0px 5px 5px rgba(46, 104, 229, 0.4);
+    color: #fff;
+    fill: #fff;
+    transform: translateY(-4px);
+}  */
+
+
+  /* .button-barra-lateral:active {
+    transform: translateY(-1px);
+  } */
+
+/* 
+  @media only screen and (min-width: 768px) {
+    #a-recarga:before {
+      content: "Recarga";
+      position: absolute;
+      top: 100%;
+      right: -50px;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    #a-recarga:hover:before {
+      opacity: 1;
+    }
+  }
+   */
+  
+
+#checkbox-container {
+    visibility: hidden;
+    position:fixed;
+    display: flex;
+  flex-direction: column;
+    bottom:50px;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.7);
+    margin: 5px;
+    border-radius: 20px;
+  }
+  
+
+  .checkbox-container > * {
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }

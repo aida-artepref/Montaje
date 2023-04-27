@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Visor IFC</title>
+        <link rel="icon" type="image/x-icon" href="./static/favicon.ico">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
+    
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,400;1,100&family=Zen+Dots&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="styles.css">
+    </head>
+
+<body>
+    <input type="file" id="file-input" accept=".ifc" >
+    <label id="file-name" ></label> 
+    <input type="file" id="importCSV" accept=".csv">
+
+    <div id="loader-button" class="button-carga-ifc">Abrir IFC</div>
+
+    <div class="button-container" id="button-container"></div>
+    
+    <div id="botonImportar">
+        <a title="importar" class="button" id="importButton">
+            <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd"><path d="M9 9h-2v-7c0-1.104.896-2 2-2h10c1.104 0 2 .896 2 2v20c0 1.104-.896 2-2 2h-10c-1.104 0-2-.896-2-2v-7h2v4h10v-14.024h-10v4.024zm5 13c-.553 0-1-.448-1-1s.447-1 1-1c.552 0 .999.448.999 1s-.447 1-.999 1zm-2-11v-3l5 4-5 4v-3h-9v-2h9zm3.5-9h-3c-.276 0-.5.224-.5.5s.224.5.5.5h3c.276 0 .5-.224.5-.5s-.224-.5-.5-.5z"/></svg>
+        </a>
+    </div>
+
+    <div  id="divNumCamiones" > </div>
+    <div class="app" id="app">
+        <!-- <iframe src="https://ifcjs.github.io/ifcjs-crash-course/sample-apps/01/" frameborder="0"></iframe> -->
+        
+        <div class="barra-lateral">
+            <a id="a-recarga" class="button-barra-lateral" onclick="location.reload();" style="margin: 5px;"  title="Recarga página">
+                <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24">
+                    <path fill="#333" d="M12,22c-5.52,0-10-4.48-10-10S6.48,2,12,2s10,4.48,10,10h-2c0-4.41-3.59-8-8-8S4,7.59,4,12s3.59,8,8,8c2.31,0,4.43-0.99,5.9-2.57l-2.9-2.9h7v7l-3.5-3.5L12,22z"/>
+                </svg> 
+            </a>
+
+            <div class="toolbar">
+                <a id="btn-lateral-propiedades" class="button-barra-lateral">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24"><path d="M21.172 24l-7.387-7.387c-1.388.874-3.024 1.387-4.785 1.387-4.971 0-9-4.029-9-9s4.029-9 9-9 9 4.029 9 9c0 1.761-.514 3.398-1.387 4.785l7.387 7.387-2.828 2.828zm-12.172-8c3.859 0 7-3.14 7-7s-3.141-7-7-7-7 3.14-7 7 3.141 7 7 7zm-3-8c.552 0 1 .448 1 1s-.448 1-1 1-1-.448-1-1 .448-1 1-1zm3 0c.552 0 1 .448 1 1s-.448 1-1 1-1-.448-1-1 .448-1 1-1zm3 0c.552 0 1 .448 1 1s-.448 1-1 1-1-.448-1-1 .448-1 1-1z"/></svg>
+                </a>
+                <a id="btn-lateral-plantas" class="button-barra-lateral">
+                    <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M24 23h-20c-2.208 0-4-1.792-4-4v-15.694c.313-1.071 1.285-2.306 3-2.306 1.855 0 2.769 1.342 2.995 2.312l.005 1.688h18v18zm-2-16h-16v11s-.587-1-1.922-1c-1.104 0-2.078.896-2.078 2s.896 2 2 2h18v-14zm-2 12h-12v-10h12v10zm-8-9h-3v8h10v-8h-6v3h6v1h-2v3h-1v-3h-3v3h-1v-7z" /></svg>
+                </a>
+                <a id="btn-lateral-seccion" class="button-barra-lateral">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24"><path d="M14.686 13.646l-6.597 3.181c-1.438.692-2.755-1.124-2.755-1.124l6.813-3.287 2.539 1.23zm6.168 5.354c-.533 0-1.083-.119-1.605-.373-1.511-.731-2.296-2.333-1.943-3.774.203-.822-.23-.934-.891-1.253l-11.036-5.341s1.322-1.812 2.759-1.117c.881.427 4.423 2.136 7.477 3.617l.766-.368c.662-.319 1.094-.43.895-1.252-.351-1.442.439-3.043 1.952-3.77.521-.251 1.068-.369 1.596-.369 1.799 0 3.147 1.32 3.147 2.956 0 1.23-.766 2.454-2.032 3.091-1.266.634-2.15.14-3.406.75l-.394.19.431.21c1.254.614 2.142.122 3.404.759 1.262.638 2.026 1.861 2.026 3.088 0 1.64-1.352 2.956-3.146 2.956zm-1.987-9.967c.381.795 1.459 1.072 2.406.617.945-.455 1.405-1.472 1.027-2.267-.381-.796-1.46-1.073-2.406-.618-.946.455-1.408 1.472-1.027 2.268zm-2.834 2.819c0-.322-.261-.583-.583-.583-.321 0-.583.261-.583.583s.262.583.583.583c.322.001.583-.261.583-.583zm5.272 2.499c-.945-.457-2.025-.183-2.408.611-.381.795.078 1.814 1.022 2.271.945.458 2.024.184 2.406-.611.382-.795-.075-1.814-1.02-2.271zm-18.305-3.351h-3v2h3v-2zm4 0h-3v2h3v-2z"/></svg>
+                </a>
+                <a id="btn-lateral-medir" class="button-barra-lateral">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24"><path d="M24 0h-8v24h8v-24zm-6 22v-2h2v-1h-2v-2h3v-1h-3v-2h2v-1h-2v-2h2v-1h-2v-2h3v-1h-3v-2h2v-1h-2v-2h4v20h-4zm-10-14v8h4l-6 8-6-8h4v-8h-4l6-8 6 8h-4z"/></svg>
+        
+                </a>
+                <!-- <a class="button-barra-lateral">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" viewBox="0 0 24 24"><path d="M1.438 16.873l-1.438 7.127 7.127-1.437 16.874-16.872-5.69-5.69-16.873 16.872zm1.12 4.572l.722-3.584 2.86 2.861-3.582.723zm18.613-15.755l-13.617 13.617-2.86-2.861 13.617-13.617 2.86 2.861z"/></svg>
+                </a> -->
+            </div>
+        </div>
+        
+
+    </div>
+    <div id="checkbox-container"></div>
+    <script  src="bundle.js"></script> 
+    
+</body>
+</html>

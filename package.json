@@ -1,0 +1,33 @@
+{
+  "name": "prueba-arte",
+  "version": "1.0.0",
+  "description": "primera prueba",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aida-artepref/Prueba-Arte.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aida-artepref/Prueba-Arte/issues"
+  },
+  "homepage": "https://github.com/aida-artepref/Prueba-Arte#readme",
+  "dependencies": {
+    "dxf-writer": "^1.18.4",
+    "three": "^0.135.0",
+    "web-ifc": "^0.0.35",
+    "web-ifc-viewer": "^1.0.213"
+  },
+  "devDependencies": {
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "rollup": "^3.10.0"
+  }
+}
