@@ -2,6 +2,10 @@ import { Color, Loader, MeshBasicMaterial, LineBasicMaterial, MeshStandardMateri
 import{ IfcViewerAPI } from 'web-ifc-viewer';
 import { IfcElementQuantity } from 'web-ifc';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
+import * as THREE from 'three';
+import { CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer';
+
+
 
 
 const container = document.getElementById('app');
@@ -247,15 +251,45 @@ container.onclick = async () => {
 
 function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
   console.log(ART_Pieza,ART_CoordX, ART_CoordY, ART_CoordZ);
+  if(ART_Pieza===undefined ||ART_CoordX===undefined ||ART_CoordY===undefined||ART_CoordZ===undefined){
+      return;
+  }else{
   const label = document.createElement('label');
   label.textContent = ART_Pieza;
+  label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
+
   
   const css2dLabel = new CSS2DObject(label);
   css2dLabel.position.set(parseFloat(ART_CoordX)/1000, parseFloat( ART_CoordZ)/1000, - parseFloat(ART_CoordY)/1000);
-
+  css2dLabel.userData.label=true;
   viewer.context.scene.scene.add(css2dLabel);
-  
+  }
 }
+// function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
+//   console.log(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
+//   if (ART_Pieza === undefined || ART_CoordX === undefined || ART_CoordY === undefined || ART_CoordZ === undefined) {
+//     return;
+//   } else {
+//     const label = new THREE.Sprite();
+//     label.userData.text = ART_Pieza;
+//     label.scale.set(2, 2, 2); // Ajustamos la escala de la etiqueta
+//     label.position.set(parseFloat(ART_CoordX) / 1000, parseFloat(ART_CoordZ) / 1000, -parseFloat(ART_CoordY) / 1000);
+//     label.userData.label = true;
+
+//     const div = document.createElement('div');
+//     console.log(ART_Pieza);
+//     div.textContent = ART_Pieza;
+//     div.style.color = '#000000';
+//     div.style.fontSize = '12px';
+//     div.style.textAlign = 'center';
+
+//     const objectCSS = new CSS2DObject(div);
+//     objectCSS.position.set(1, 0, 0);
+//     label.add(objectCSS);
+
+//     viewer.context.scene.scene.add(label);
+//   }
+// }
 
 
 
@@ -428,8 +462,8 @@ function generateCheckboxes(precastElements) {
   return html;
 }
 
-
 function addCheckboxListeners(precastElements, viewer) {
+  
   const checkboxes = document.querySelectorAll('input[type="checkbox"]');
   checkboxes.forEach(function(checkbox) {
     checkbox.addEventListener('change', function() {
@@ -439,7 +473,6 @@ function addCheckboxListeners(precastElements, viewer) {
       const visibleIds = [];
       const parentText = this.parentNode.textContent.trim();
       const letter = parentText.charAt(0).toUpperCase();
-
       let prevEl = null;
       precastElements.forEach(function(el, index) {
         if (el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
@@ -457,50 +490,42 @@ function addCheckboxListeners(precastElements, viewer) {
       if (isChecked) {
         console.log(visibleIds);
         showAllItems(viewer, visibleIds);
-        filtrarVisibleIds( visibleIds);
-        
-        
+        filtrarVisibleIds(visibleIds);
       } else {
         // console.log(visibleIds);
         hideAllItems(viewer, visibleIds);
         removeLabels(letter);
+        
       }
-
     });
+
   });
+  
+  
 }
 
-// function removeLabels(letter) {
-//   const labels = document.getElementsByTagName('label');
-//   console.log(labels);
-//   console.log(labels.length);
-//   for (let i = 0; i < labels.length; i++) {
-//     const label = labels[i];
-//     const texto = labels[i].textContent.charAt(0);
-//   console.log(texto);
-//   if (texto === letter ) {
-//     label.parentNode.removeChild(label);
-//     const css2dObject = viewer.context.scene.scene.getObjectByName(label.id);
-//     viewer.context.scene.scene.remove(css2dObject);
-  
-  
-//     }
-//   }
-// }
+
 function removeLabels(letter) {
-  const scene = viewer.context.scene.scene;
-  const labels = document.getElementsByTagName('label');
+
+  const labels = document.querySelectorAll('.pieza-label'); // Buscar todas las etiquetas creadas por muestraNombrePieza
+  //console.log(viewer.context.getScene())
+ // viewer.context.getScene().children.filter(child=>child.userData.label).forEach(child=>child.removeFromParent())
+
   for (let i = 0; i < labels.length; i++) {
     const label = labels[i];
     const texto = labels[i].textContent.charAt(0);
     if (texto === letter || texto===""||texto===undefined) {
-      //elimina el objeto de etiqueta de la escena
+      // elimina el objeto de etiqueta de la escena
       const css2dObject = scene.getObjectByName(label.id);
       scene.remove(css2dObject);
 
       // Elimina el elemento HTML del DOM
       const parent = label.parentNode;
       parent.removeChild(label);
+      label.style.display =  'none';
+
+
+      
     }
   }
 }
