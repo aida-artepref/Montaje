@@ -122177,6 +122177,7 @@ function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
   css2dLabel.userData.label=true;
   viewer.context.scene.scene.add(css2dLabel);
   }
+ 
 }
 // function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
 //   console.log(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
@@ -122373,10 +122374,9 @@ function generateCheckboxes(precastElements) {
 }
 
 function addCheckboxListeners(precastElements, viewer) {
-  
   const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-  checkboxes.forEach(function(checkbox) {
-    checkbox.addEventListener('change', function() {
+  for (let i = 0; i < checkboxes.length; i++) {
+    checkboxes[i].addEventListener('change', function() {
       viewer.IFC.selector.unpickIfcItems();
       const isChecked = this.checked;
       const artPieza = this.getAttribute('data-art-pieza');
@@ -122396,36 +122396,57 @@ function addCheckboxListeners(precastElements, viewer) {
           prevEl = el;
         }
       });
-
       if (isChecked) {
         console.log(visibleIds);
         showAllItems(viewer, visibleIds);
         filtrarVisibleIds(visibleIds);
       } else {
         // console.log(visibleIds);
-        hideAllItems(viewer, visibleIds);
+        // hideAllItems(viewer, visibleIds).then(() => {
+        //   removeLabels(letter);
+        // });
         removeLabels(letter);
         
       }
     });
-
-  });
-  
-  
+  }
 }
 
 
+// function removeLabels(letter) {
+
+//   const labels = document.querySelectorAll('.pieza-label'); // Buscar todas las etiquetas creadas por muestraNombrePieza
+//   //console.log(viewer.context.getScene())
+//  // viewer.context.getScene().children.filter(child=>child.userData.label).forEach(child=>child.removeFromParent())
+
+//   for (let i = 0; i < labels.length; i++) {
+//     const label = labels[i];
+//     const texto = labels[i].textContent.charAt(0);
+//     if (texto === letter || texto===""||texto===undefined) {
+//       // elimina el objeto de etiqueta de la escena
+//       const css2dObject = scene.getObjectByName(label.id);
+//       scene.remove(css2dObject);
+
+//       // Elimina el elemento HTML del DOM
+//       const parent = label.parentNode;
+//       parent.removeChild(label);
+//       label.style.display =  'none';
+
+
+      
+//     }
+//   }
+// }
+
+
 function removeLabels(letter) {
-
-  const labels = document.querySelectorAll('.pieza-label'); // Buscar todas las etiquetas creadas por muestraNombrePieza
-  //console.log(viewer.context.getScene())
- // viewer.context.getScene().children.filter(child=>child.userData.label).forEach(child=>child.removeFromParent())
-
+  const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label-item"
   for (let i = 0; i < labels.length; i++) {
     const label = labels[i];
     const texto = labels[i].textContent.charAt(0);
     if (texto === letter || texto===""||texto===undefined) {
       // elimina el objeto de etiqueta de la escena
+      scene.remove(label.parent);
       const css2dObject = scene.getObjectByName(label.id);
       scene.remove(css2dObject);
 
@@ -122433,14 +122454,9 @@ function removeLabels(letter) {
       const parent = label.parentNode;
       parent.removeChild(label);
       label.style.display =  'none';
-
-
-      
     }
   }
 }
-
-
 
 
 let elementosValidos=[];
@@ -122577,14 +122593,26 @@ function obtenerValorCamion(precastElements) {
   return Array.from(valoresCamion);
 }
 
+// function hideAllItems(viewer, ids) {
+// 	ids.forEach(function(id) {
+//         viewer.IFC.loader.ifcManager.removeFromSubset(
+//             0,
+//             [id],
+//             'full-model-subset',
+//         );
+//     }); 
+// }
 function hideAllItems(viewer, ids) {
-	ids.forEach(function(id) {
-        viewer.IFC.loader.ifcManager.removeFromSubset(
-            0,
-            [id],
-            'full-model-subset',
-        );
-    }); 
+  return new Promise(resolve => {
+    ids.forEach(function(id) {
+      viewer.IFC.loader.ifcManager.removeFromSubset(
+        0,
+        [id],
+        'full-model-subset',
+      );
+    });
+    resolve();
+  });
 }
 
 function showAllItems(viewer, ids) {
