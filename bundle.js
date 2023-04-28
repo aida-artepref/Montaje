@@ -121926,7 +121926,7 @@ new Matrix4();
 const container = document.getElementById('app');
 const viewer = new IfcViewerAPI({container, backgroundColor: new Color("#EDE8BA")});
 
-const scene = viewer.context.scene.scene;
+viewer.context.scene.scene;
 
 viewer.clipper.active = true;
 viewer.grid.setGrid(100,100);
@@ -122382,7 +122382,7 @@ function addCheckboxListeners(precastElements, viewer) {
       const artPieza = this.getAttribute('data-art-pieza');
       const visibleIds = [];
       const parentText = this.parentNode.textContent.trim();
-      const letter = parentText.charAt(0).toUpperCase();
+      parentText.charAt(0).toUpperCase();
       let prevEl = null;
       precastElements.forEach(function(el, index) {
         if (el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
@@ -122405,56 +122405,11 @@ function addCheckboxListeners(precastElements, viewer) {
         // hideAllItems(viewer, visibleIds).then(() => {
         //   removeLabels(letter);
         // });
-        removeLabels(letter);
+       // removeLabels(letter);
+       hideAllItems(viewer, visibleIds);
         
       }
     });
-  }
-}
-
-
-// function removeLabels(letter) {
-
-//   const labels = document.querySelectorAll('.pieza-label'); // Buscar todas las etiquetas creadas por muestraNombrePieza
-//   //console.log(viewer.context.getScene())
-//  // viewer.context.getScene().children.filter(child=>child.userData.label).forEach(child=>child.removeFromParent())
-
-//   for (let i = 0; i < labels.length; i++) {
-//     const label = labels[i];
-//     const texto = labels[i].textContent.charAt(0);
-//     if (texto === letter || texto===""||texto===undefined) {
-//       // elimina el objeto de etiqueta de la escena
-//       const css2dObject = scene.getObjectByName(label.id);
-//       scene.remove(css2dObject);
-
-//       // Elimina el elemento HTML del DOM
-//       const parent = label.parentNode;
-//       parent.removeChild(label);
-//       label.style.display =  'none';
-
-
-      
-//     }
-//   }
-// }
-
-
-function removeLabels(letter) {
-  const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label-item"
-  for (let i = 0; i < labels.length; i++) {
-    const label = labels[i];
-    const texto = labels[i].textContent.charAt(0);
-    if (texto === letter || texto===""||texto===undefined) {
-      // elimina el objeto de etiqueta de la escena
-      scene.remove(label.parent);
-      const css2dObject = scene.getObjectByName(label.id);
-      scene.remove(css2dObject);
-
-      // Elimina el elemento HTML del DOM
-      const parent = label.parentNode;
-      parent.removeChild(label);
-      label.style.display =  'none';
-    }
   }
 }
 
@@ -122593,27 +122548,17 @@ function obtenerValorCamion(precastElements) {
   return Array.from(valoresCamion);
 }
 
-// function hideAllItems(viewer, ids) {
-// 	ids.forEach(function(id) {
-//         viewer.IFC.loader.ifcManager.removeFromSubset(
-//             0,
-//             [id],
-//             'full-model-subset',
-//         );
-//     }); 
-// }
 function hideAllItems(viewer, ids) {
-  return new Promise(resolve => {
-    ids.forEach(function(id) {
-      viewer.IFC.loader.ifcManager.removeFromSubset(
-        0,
-        [id],
-        'full-model-subset',
-      );
-    });
-    resolve();
-  });
+	ids.forEach(function(id) {
+        viewer.IFC.loader.ifcManager.removeFromSubset(
+            0,
+            [id],
+            'full-model-subset',
+        );
+    }); 
 }
+
+
 
 function showAllItems(viewer, ids) {
 	viewer.IFC.loader.ifcManager.createSubset({
