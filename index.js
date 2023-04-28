@@ -495,7 +495,8 @@ function addCheckboxListeners(precastElements, viewer) {
         // hideAllItems(viewer, visibleIds).then(() => {
         //   removeLabels(letter);
         // });
-        removeLabels(letter);
+       // removeLabels(letter);
+       hideAllItems(viewer, visibleIds)
         
       }
     });
@@ -683,27 +684,17 @@ function obtenerValorCamion(precastElements) {
   return Array.from(valoresCamion);
 }
 
-// function hideAllItems(viewer, ids) {
-// 	ids.forEach(function(id) {
-//         viewer.IFC.loader.ifcManager.removeFromSubset(
-//             0,
-//             [id],
-//             'full-model-subset',
-//         );
-//     }); 
-// }
 function hideAllItems(viewer, ids) {
-  return new Promise(resolve => {
-    ids.forEach(function(id) {
-      viewer.IFC.loader.ifcManager.removeFromSubset(
-        0,
-        [id],
-        'full-model-subset',
-      );
-    });
-    resolve();
-  });
+	ids.forEach(function(id) {
+        viewer.IFC.loader.ifcManager.removeFromSubset(
+            0,
+            [id],
+            'full-model-subset',
+        );
+    }); 
 }
+
+
 
 function showAllItems(viewer, ids) {
 	viewer.IFC.loader.ifcManager.createSubset({
