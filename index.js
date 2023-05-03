@@ -19,6 +19,18 @@ viewer.axes.setAxes();
 
 
 
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize( window.innerWidth, window.innerHeight );
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.pointerEvents = 'none';
+labelRenderer.domElement.style.top = '0px';
+document.body.appendChild( labelRenderer.domElement );
+
+
+window.addEventListener("resize", () => {
+  labelRenderer.setSize(viewer.clientWidth, viewer.clientHeight);
+});
+
 document.addEventListener("keydown", function(event) {
     if (event.keyCode === 116) { // keyCode 116 es la tecla F5
       event.preventDefault(); // evita que se procese 
@@ -243,61 +255,12 @@ container.onclick = async () => {
                 console.log(ART_CoordZ+ " Z");
             }
         }
-        muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
+        muestraNombrePiezaOnClick(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
     }
 }
 };
 
-
-function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
-  console.log(ART_Pieza,ART_CoordX, ART_CoordY, ART_CoordZ);
-  if(ART_Pieza===undefined ||ART_CoordX===undefined ||ART_CoordY===undefined||ART_CoordZ===undefined){
-      return;
-  }else{
-  const label = document.createElement('label');
-  label.textContent = ART_Pieza;
-  label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
-
-  
-  const css2dLabel = new CSS2DObject(label);
-  css2dLabel.position.set(parseFloat(ART_CoordX)/1000, parseFloat( ART_CoordZ)/1000, - parseFloat(ART_CoordY)/1000);
-  css2dLabel.userData.label=true;
-  viewer.context.scene.scene.add(css2dLabel);
-  }
- 
-}
-// function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
-//   console.log(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
-//   if (ART_Pieza === undefined || ART_CoordX === undefined || ART_CoordY === undefined || ART_CoordZ === undefined) {
-//     return;
-//   } else {
-//     const label = new THREE.Sprite();
-//     label.userData.text = ART_Pieza;
-//     label.scale.set(2, 2, 2); // Ajustamos la escala de la etiqueta
-//     label.position.set(parseFloat(ART_CoordX) / 1000, parseFloat(ART_CoordZ) / 1000, -parseFloat(ART_CoordY) / 1000);
-//     label.userData.label = true;
-
-//     const div = document.createElement('div');
-//     console.log(ART_Pieza);
-//     div.textContent = ART_Pieza;
-//     div.style.color = '#000000';
-//     div.style.fontSize = '12px';
-//     div.style.textAlign = 'center';
-
-//     const objectCSS = new CSS2DObject(div);
-//     objectCSS.position.set(1, 0, 0);
-//     label.add(objectCSS);
-
-//     viewer.context.scene.scene.add(label);
-//   }
-// }
-
-
-
-
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
 // Seccion button - corte
 const cutButton = document.getElementById('btn-lateral-seccion');
 
@@ -364,10 +327,7 @@ floorplanButton.onclick = () => {
     
   };
 };
-
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
 
 window.onclick = async () => {
     if(cutActive) {
@@ -379,6 +339,7 @@ window.onclick = async () => {
 
 let precastElements=[];
 
+//*********************************************************************************************************** */
 //cuando importa un archivo CSV rellena el array con las propiedades necesarias y genera los botones con numCamion *****************************
 GUI.importer.addEventListener("change", function(e) {
   e.preventDefault();
@@ -435,9 +396,88 @@ GUI.importer.addEventListener("change", function(e) {
     checkboxContainer.innerHTML = generateCheckboxes(precastElements);
     checkboxContainer.style.visibility = "visible"; 
     addCheckboxListeners(precastElements, viewer);
+    // addBotonCheckboxListeners();
   })
   .catch(error => console.error(error));
 });
+
+// function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
+
+//   if (ART_Pieza === undefined || ART_CoordX === undefined || ART_CoordY === undefined || ART_CoordZ === undefined) {
+//     return;
+//   } else {
+//     // Buscar todas las etiquetas existentes con el mismo texto
+//     const existingLabels = document.querySelectorAll('.pieza-label');
+//     let labelExists = false;
+//     for (let i = 0; i < existingLabels.length; i++) {
+//       const label = existingLabels[i];
+//       if (label.textContent === ART_Pieza) {
+//         // Si una etiqueta con el mismo texto ya existe, hazla visible si está oculta
+//         if (label.style.visibility === 'hidden') {
+//           label.style.visibility = 'visible';
+//         }
+//         labelExists = true;
+//       }
+//     }
+//     if (!labelExists) {
+//       // Si no existe ninguna etiqueta con el mismo texto, crea una nueva etiqueta
+//       const label = document.createElement('p');
+//       label.textContent = ART_Pieza;
+//       label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
+//       const labelObject = new CSS2DObject(label);
+//       labelObject.position.set(parseFloat(ART_CoordX)/1000, parseFloat(ART_CoordZ)/1000, -parseFloat(ART_CoordY)/1000);
+//       scene.add(labelObject);
+//     }
+//   }
+// }
+
+function muestraNombrePiezaOnClick(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ){
+  console.log(ART_Pieza,ART_CoordX, ART_CoordY, ART_CoordZ);
+  if(ART_Pieza===undefined ||ART_CoordX===undefined ||ART_CoordY===undefined||ART_CoordZ===undefined){
+      return;
+  }else{
+  const label = document.createElement('p');
+  label.textContent = ART_Pieza;
+  label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
+  const labelObject=new CSS2DObject (label);
+  labelObject.position.set(parseFloat(ART_CoordX)/1000, parseFloat( ART_CoordZ)/1000, - parseFloat(ART_CoordY)/1000)
+  scene.add(labelObject)
+  }
+} 
+
+
+function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
+  console.log(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
+
+  if (ART_Pieza === undefined || ART_CoordX === undefined || ART_CoordY === undefined || ART_CoordZ === undefined) {
+    return;
+  } else {
+    const elements = document.getElementsByTagName('p');
+    let count = 0;
+
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
+
+      if (element.textContent.startsWith(ART_Pieza)) {
+        if (element.style.visibility === 'hidden') {
+          element.style.visibility = 'visible';
+        }
+        count++;
+      }
+    }
+
+    if (count === 0) {
+      const label = document.createElement('p');
+      label.textContent = ART_Pieza;
+      label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
+      const labelObject = new CSS2DObject(label);
+      labelObject.position.set(parseFloat(ART_CoordX) / 1000, parseFloat(ART_CoordZ) / 1000, -parseFloat(ART_CoordY) / 1000)
+      scene.add(labelObject)
+    }
+  }
+}
+
+
 
 function generateCheckboxes(precastElements) {
   //agrupa los elementos por la primera letra de la propiedad ART_Pieza
@@ -452,15 +492,73 @@ function generateCheckboxes(precastElements) {
     acc[firstLetter].push(el);
     return acc;
   }, {});
-
-  //genera el HTML para los checkboxes
+  //genera el HTML para los checkboxes y los botones
   let html = '';
   Object.entries(groupedElements).forEach(([artPieza, elements]) => {
-    html += `<div class="checkbox-container">`;
-    html += `<input type="checkbox" checked data-art-pieza="${artPieza}" style="margin-right: 8px">${artPieza} (${elements.length})`;
+    html += `<div class="checkbox-button-container">`;
+    html += `<button class="btnCheck" data-art-pieza="${artPieza}"> ${artPieza}</button>`;
+    html += `<div class="checkbox-group">`;
+    html += `<input type="checkbox" checked data-art-pieza="${artPieza}" style="margin-left: 8px">${artPieza} (${elements.length})`;
+    html += `</div>`;
     html += `</div>`;
   });
+  setTimeout(() => {
+    addBotonCheckboxListeners();
+  }, 0);
   return html;
+}
+
+function addBotonCheckboxListeners() {
+  const buttons = document.querySelectorAll('.btnCheck');
+  for (let i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener('click', function() {
+      const letter = this.dataset.artPieza;
+      const isChecked = this.checked;
+      const artPieza = this.getAttribute('data-art-pieza');
+      const visibleIds = [];
+      const parentText = this.parentNode.textContent.trim();
+      let prevEl = null;
+      precastElements.forEach(function(el, index) {
+        if (el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
+          const nextEl = precastElements[index + 1];
+          if (prevEl) {
+            visibleIds.push(prevEl.expressID);
+          }
+          if (nextEl) {
+            visibleIds.push(nextEl.expressID);
+          }
+          prevEl = el;
+        }
+      });
+      if (this.classList.contains('pulsado')) {
+        this.classList.remove('pulsado');
+        removeLabels(letter);
+      } else {
+        this.classList.add('pulsado');
+        filtrarVisibleIds(visibleIds);
+      }
+    });
+  }
+  function removeLabels(letter) {
+    const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label-item"
+    for (let i = 0; i < labels.length; i++) {
+      const label = labels[i];
+      const texto = labels[i].textContent.charAt(0);
+      if (texto === letter || texto===""||texto===undefined) {
+
+        // label.style.display =  'none';
+        // // elimina el objeto de etiqueta de la escena
+        // scene.remove(label.parent);
+        // scene.remove(label.child);
+        // const css2dObject = scene.getObjectByName(label.id);
+        // scene.remove(css2dObject);
+        // // Elimina el elemento HTML del DOM
+        // const parent = label.parentNode;
+        // parent.removeChild(label);
+        label.style.visibility =  'hidden';
+      }
+    }
+  }
 }
 
 function addCheckboxListeners(precastElements, viewer) {
@@ -487,68 +585,13 @@ function addCheckboxListeners(precastElements, viewer) {
         }
       });
       if (isChecked) {
-        console.log(visibleIds);
         showAllItems(viewer, visibleIds);
-        filtrarVisibleIds(visibleIds);
       } else {
-        // console.log(visibleIds);
-        // hideAllItems(viewer, visibleIds).then(() => {
-        //   removeLabels(letter);
-        // });
-       // removeLabels(letter);
-       hideAllItems(viewer, visibleIds)
-        
+        hideAllItems(viewer, visibleIds)
       }
     });
   }
 }
-
-
-// function removeLabels(letter) {
-
-//   const labels = document.querySelectorAll('.pieza-label'); // Buscar todas las etiquetas creadas por muestraNombrePieza
-//   //console.log(viewer.context.getScene())
-//  // viewer.context.getScene().children.filter(child=>child.userData.label).forEach(child=>child.removeFromParent())
-
-//   for (let i = 0; i < labels.length; i++) {
-//     const label = labels[i];
-//     const texto = labels[i].textContent.charAt(0);
-//     if (texto === letter || texto===""||texto===undefined) {
-//       // elimina el objeto de etiqueta de la escena
-//       const css2dObject = scene.getObjectByName(label.id);
-//       scene.remove(css2dObject);
-
-//       // Elimina el elemento HTML del DOM
-//       const parent = label.parentNode;
-//       parent.removeChild(label);
-//       label.style.display =  'none';
-
-
-      
-//     }
-//   }
-// }
-
-
-function removeLabels(letter) {
-  const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label-item"
-  for (let i = 0; i < labels.length; i++) {
-    const label = labels[i];
-    const texto = labels[i].textContent.charAt(0);
-    if (texto === letter || texto===""||texto===undefined) {
-      // elimina el objeto de etiqueta de la escena
-      scene.remove(label.parent);
-      const css2dObject = scene.getObjectByName(label.id);
-      scene.remove(css2dObject);
-
-      // Elimina el elemento HTML del DOM
-      const parent = label.parentNode;
-      parent.removeChild(label);
-      label.style.display =  'none';
-    }
-  }
-}
-
 
 let elementosValidos=[];
 function filtrarVisibleIds( visibleIds) {
@@ -565,7 +608,7 @@ function filtrarVisibleIds( visibleIds) {
       elementosValidos.push(expressIDActual);
     }
   }
-  console.log (elementosValidos);
+  console.log (elementosValidos+"ELEMENT");
   generateLabels(elementosValidos);
   elementosValidos=[];
 }
@@ -588,6 +631,7 @@ async function generateLabels(expressIDs) {
         for (const property in properties) {
           if (properties[property].Name.value === 'ART_Pieza') {
             ART_Pieza =  properties[property].NominalValue.value;
+            console.log(ART_Pieza);
           }
           if (properties[property].Name.value === 'ART_CoordX') {
             ART_CoordX =  properties[property].NominalValue.value;
@@ -604,7 +648,6 @@ async function generateLabels(expressIDs) {
     }
   }
 }
-
 
 function generaBotonesNumCamion(camionesUnicos) {
   viewer.IFC.selector.unpickIfcItems();
@@ -693,8 +736,6 @@ function hideAllItems(viewer, ids) {
         );
     }); 
 }
-
-
 
 function showAllItems(viewer, ids) {
 	viewer.IFC.loader.ifcManager.createSubset({
