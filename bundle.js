@@ -91581,6 +91581,36 @@ class PlanManager {
         const siteCoords = await this.getSiteCoords(modelID);
         const transformHeight = await this.getTransformHeight(modelID);
         const storeys = this.storeys[modelID];
+        // if(storeys[0]){
+        //     const baseHeight = ((_a = storeys[0].Elevation) === null || _a === void 0 ? void 0 : _a.value) || 0;
+        //         const elevation = (baseHeight + siteCoords[2]) * unitsScale + transformHeight;
+        //         const expressID = storeys[0].expressID;
+        //         // eslint-disable-next-line no-await-in-loop
+        //         await this.create({
+        //             modelID,
+        //             name: this.getFloorplanName(storeys[0]),
+        //             point: new Vector3(0, elevation +0.5 , 0),
+        //             normal: new Vector3(0, -1, 0),
+        //             ortho: true,
+        //             expressID
+        //         });
+        // }
+        // if(storeys[1]){
+        //     const baseHeight = ((_a = storeys[1].Elevation) === null || _a === void 0 ? void 0 : _a.value) || 0;
+        //         const elevation = (baseHeight + siteCoords[2]) * unitsScale + transformHeight;
+        //         const expressID = storeys[0].expressID;
+        //         // eslint-disable-next-line no-await-in-loop
+        //         await this.create({
+        //             modelID,
+        //             name: this.getFloorplanName(storeys[1]),
+        //             point: new Vector3(0, elevation +1.5 , 0),
+        //             normal: new Vector3(0, -1, 0),
+        //             ortho: true,
+        //             expressID
+        //         });
+        // }
+
+
         for (let i = 0; i < storeys.length; i++) {
             if (storeys[i]) {
                 const baseHeight = ((_a = storeys[i].Elevation) === null || _a === void 0 ? void 0 : _a.value) || 0;
@@ -91592,12 +91622,35 @@ class PlanManager {
                     name: this.getFloorplanName(storeys[i]),
                     point: new Vector3(0, elevation + this.defaultSectionOffset, 0),
                     normal: new Vector3(0, -1, 0),
-                    rotation: 0,
                     ortho: true,
                     expressID
                 });
             }
         }
+        // async computeAllPlanViews(modelID) {
+        //     var _a;
+        //     await this.getCurrentStoreys(modelID);
+        //     const unitsScale = await this.ifc.units.getUnits(modelID, UnitType.LENGTHUNIT);
+        //     const siteCoords = await this.getSiteCoords(modelID);
+        //     const transformHeight = await this.getTransformHeight(modelID);
+        //     const storeys = this.storeys[modelID];
+        //     for (let i = 0; i < storeys.length; i++) {
+        //         if (storeys[i]) {
+        //             const baseHeight = ((_a = storeys[i].Elevation) === null || _a === void 0 ? void 0 : _a.value) || 0;
+        //             const elevation = (baseHeight + siteCoords[2]) * unitsScale + transformHeight;
+        //             const expressID = storeys[i].expressID;
+        //             // eslint-disable-next-line no-await-in-loop
+        //             await this.create({
+        //                 modelID,
+        //                 name: this.getFloorplanName(storeys[i]),
+        //                 point: new Vector3(0, elevation + this.defaultSectionOffset, 0),
+        //                 normal: new Vector3(0, -1, 0),
+        //                 rotation: 0,
+        //                 ortho: true,
+        //                 expressID
+        //             });
+        //         }
+        //     }
     }
     storeCameraPosition() {
         if (this.active) {
@@ -121843,96 +121896,12 @@ class IfcViewerAPI {
     }
 }
 
-/**
- * Based on http://www.emagix.net/academic/mscs-project/item/camera-sync-with-css3-and-webgl-threejs
- */
-
-new Vector3();
-new Quaternion();
-new Vector3();
-
-class CSS3DObject extends Object3D {
-
-	constructor( element = document.createElement( 'div' ) ) {
-
-		super();
-
-		this.element = element;
-		this.element.style.position = 'absolute';
-		this.element.style.pointerEvents = 'auto';
-		this.element.style.userSelect = 'none';
-
-		this.element.setAttribute( 'draggable', false );
-
-		this.addEventListener( 'removed', function () {
-
-			this.traverse( function ( object ) {
-
-				if ( object.element instanceof Element && object.element.parentNode !== null ) {
-
-					object.element.parentNode.removeChild( object.element );
-
-				}
-
-			} );
-
-		} );
-
-	}
-
-	copy( source, recursive ) {
-
-		super.copy( source, recursive );
-
-		this.element = source.element.cloneNode( true );
-
-		return this;
-
-	}
-
-}
-
-CSS3DObject.prototype.isCSS3DObject = true;
-
-class CSS3DSprite extends CSS3DObject {
-
-	constructor( element ) {
-
-		super( element );
-
-		this.rotation2D = 0;
-
-	}
-
-	copy( source, recursive ) {
-
-		super.copy( source, recursive );
-
-		this.rotation2D = source.rotation2D;
-
-		return this;
-
-	}
-
-}
-
-CSS3DSprite.prototype.isCSS3DSprite = true;
-
-//
-
-new Matrix4();
-new Matrix4();
-
 const container = document.getElementById('app');
 const viewer = new IfcViewerAPI({container, backgroundColor: new Color("#EDE8BA")});
-
 const scene = viewer.context.scene.scene;
-
 viewer.clipper.active = true;
 viewer.grid.setGrid(100,100);
 viewer.axes.setAxes();
-
-
 
 const labelRenderer = new CSS2DRenderer();
 labelRenderer.setSize( window.innerWidth, window.innerHeight );
@@ -121940,7 +121909,6 @@ labelRenderer.domElement.style.position = 'absolute';
 labelRenderer.domElement.style.pointerEvents = 'none';
 labelRenderer.domElement.style.top = '0px';
 document.body.appendChild( labelRenderer.domElement );
-
 
 window.addEventListener("resize", () => {
   labelRenderer.setSize(viewer.clientWidth, viewer.clientHeight);
@@ -121966,7 +121934,7 @@ const GUI={
 document.getElementById("file-input").addEventListener("change", function() {
     const file = this.files[0];
     document.getElementById("file-name").innerHTML = file.name;
-    document.getElementById("file-name").style.display = "block"; /* Hace visible la etiqueta */
+    document.getElementById("file-name").style.display = "block"; 
 });
 
 GUI.loader.onclick = () => GUI.input.click();  //al hacer clic al boton abre cuadro de dialogo para cargar archivo
@@ -121978,34 +121946,53 @@ GUI.input.onchange = async (event) => {
     const url=URL.createObjectURL(file);
     loadModel(url); 
 };
+
 let allPlans;
 let model;
 let allIDs;
 let idsTotal;
 let camionesUnicos=[];
 let uniqueTypes=[];
+let precastElements=[];
 
 async function loadModel(url) {
-    model = await viewer.IFC.loadIfcUrl(url);
+   model = await viewer.IFC.loadIfcUrl(url);
 
-    getPlantas();
+  // Crear material para los elementos sólidos
+  const solidMaterial = new MeshStandardMaterial({ color: "green" });
+  model.material = solidMaterial;
 
-    createPrecastElementsArray(model.modelID).then((precastElements) => {
-      cargaGlobalIdenPrecast();
-    });
-    
-    allIDs = getAllIds(model); 
-    idsTotal=getAllIds(model);
-    viewer.shadows = true;
-    
-    let subset = getWholeSubset(viewer, model, allIDs);
-    replaceOriginalModelBySubset(viewer, model, subset); //reemplaza el modelo original por el subconjunto.
+  // Crear material para los bordes
+  const edgeMaterial = new LineBasicMaterial({ color: "black" });
+
+  // Crear geometría de bordes y añadir a escena
+  const edges = new EdgesGeometry(model.geometry);
+  const edgeMesh = new LineSegments(edges, edgeMaterial);
+
+  // Crear grupo y agregar modelo y líneas
+  const group = new Group();
+  group.add(model);
+  group.add(edgeMesh);
+
+  // Añadir grupo a la escena
+  scene.add(group);
+
+  getPlantas(model);
+
+  createPrecastElementsArray(model.modelID).then((precastElements) => {
+    cargaGlobalIdenPrecast();
+  });
+
+  allIDs = getAllIds(model);
+  idsTotal = getAllIds(model);
+  viewer.shadows = true;
+
+  let subset = getWholeSubset(viewer, model, allIDs);
+  replaceOriginalModelBySubset(viewer, model, subset);
 }
 
-
-
-
-async function getPlantas(){
+async function getPlantas(model){
+  
   await viewer.plans.computeAllPlanViews(model.modelID);
 
     const lineMaterial = new LineBasicMaterial({ color: 'black' });
@@ -122057,9 +122044,8 @@ async function getPlantas(){
         activeButton.classList.remove('activo');
       }
     };
-
-
 }
+
 async function createPrecastElementsArray(modelID){
   const ifcProject = await viewer.IFC.getSpatialStructure (modelID);
 
@@ -122093,6 +122079,7 @@ function getAllIds(ifcModel) {
       new Set(ifcModel.geometry.attributes.expressID.array),
   );
 }
+
 function cargaGlobalIdenPrecast(){
   //Carga la propiedade GlobalId al array precastElements
       precastElements.forEach(precast => {
@@ -122102,10 +122089,12 @@ function cargaGlobalIdenPrecast(){
       }); 
       
 }
+
 async function precastPropertiesGlobalId(precast,modelID, precastID){
   const props = await viewer.IFC.getProperties(modelID, precastID, true, false);
   precast['GlobalId'] = props['GlobalId'].value; //establece propiedad GlobalId en obj precast y le asigna un valor
 }
+
 function getWholeSubset(viewer, model, allIDs) {
 	return viewer.IFC.loader.ifcManager.createSubset({
 		modelID: model.modelID,
@@ -122116,6 +122105,7 @@ function getWholeSubset(viewer, model, allIDs) {
 		customID: 'full-model-subset',
 	});
 }
+
 function replaceOriginalModelBySubset(viewer, model, subset) {
 	const items = viewer.context.items;  //obtiene el objeto "items" del contexto del visor y lo almacena en una variable local.
 	items.pickableIfcModels = items.pickableIfcModels.filter(model => model !== model);  //Filtra las matrices y elimina cualquier referencia al modelo original
@@ -122247,8 +122237,6 @@ window.onclick = async () => {
     }
 };
 
-let precastElements=[];
-
 //*********************************************************************************************************** */
 //cuando importa un archivo CSV rellena el array con las propiedades necesarias y genera los botones con numCamion *****************************
 GUI.importer.addEventListener("change", function(e) {
@@ -122297,9 +122285,6 @@ GUI.importer.addEventListener("change", function(e) {
 
   readCsvFile.then(() => {
 
-      
-    camionesUnicos = obtenerValorCamion(precastElements);
-    generaBotonesNumCamion(camionesUnicos);
     const btnCargaCsv= document.getElementById("botonImportar");
     btnCargaCsv.style.visibility="hidden";
     const checkboxContainer = document.getElementById('checkbox-container');
@@ -122307,39 +122292,12 @@ GUI.importer.addEventListener("change", function(e) {
     checkboxContainer.style.visibility = "visible"; 
     addCheckboxListeners(precastElements, viewer);
     // addBotonCheckboxListeners();
+    
+    camionesUnicos = obtenerValorCamion(precastElements);
+    generaBotonesNumCamion(camionesUnicos);
   })
   .catch(error => console.error(error));
 });
-
-// function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
-
-//   if (ART_Pieza === undefined || ART_CoordX === undefined || ART_CoordY === undefined || ART_CoordZ === undefined) {
-//     return;
-//   } else {
-//     // Buscar todas las etiquetas existentes con el mismo texto
-//     const existingLabels = document.querySelectorAll('.pieza-label');
-//     let labelExists = false;
-//     for (let i = 0; i < existingLabels.length; i++) {
-//       const label = existingLabels[i];
-//       if (label.textContent === ART_Pieza) {
-//         // Si una etiqueta con el mismo texto ya existe, hazla visible si está oculta
-//         if (label.style.visibility === 'hidden') {
-//           label.style.visibility = 'visible';
-//         }
-//         labelExists = true;
-//       }
-//     }
-//     if (!labelExists) {
-//       // Si no existe ninguna etiqueta con el mismo texto, crea una nueva etiqueta
-//       const label = document.createElement('p');
-//       label.textContent = ART_Pieza;
-//       label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
-//       const labelObject = new CSS2DObject(label);
-//       labelObject.position.set(parseFloat(ART_CoordX)/1000, parseFloat(ART_CoordZ)/1000, -parseFloat(ART_CoordY)/1000);
-//       scene.add(labelObject);
-//     }
-//   }
-// }
 
 function muestraNombrePiezaOnClick(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ){
   console.log(ART_Pieza,ART_CoordX, ART_CoordY, ART_CoordZ);
@@ -122354,7 +122312,6 @@ function muestraNombrePiezaOnClick(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ
   scene.add(labelObject);
   }
 } 
-
 
 function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
   console.log(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
@@ -122386,8 +122343,6 @@ function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
     }
   }
 }
-
-
 
 function generateCheckboxes(precastElements) {
   //agrupa los elementos por la primera letra de la propiedad ART_Pieza
@@ -122449,24 +122404,15 @@ function addBotonCheckboxListeners() {
       }
     });
   }
-  function removeLabels(letter) {
-    const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label-item"
-    for (let i = 0; i < labels.length; i++) {
-      const label = labels[i];
-      const texto = labels[i].textContent.charAt(0);
-      if (texto === letter || texto===""||texto===undefined) {
+}
 
-        // label.style.display =  'none';
-        // // elimina el objeto de etiqueta de la escena
-        // scene.remove(label.parent);
-        // scene.remove(label.child);
-        // const css2dObject = scene.getObjectByName(label.id);
-        // scene.remove(css2dObject);
-        // // Elimina el elemento HTML del DOM
-        // const parent = label.parentNode;
-        // parent.removeChild(label);
-        label.style.visibility =  'hidden';
-      }
+function removeLabels(letter) {
+  const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label-item"
+  for (let i = 0; i < labels.length; i++) {
+    const label = labels[i];
+    const texto = labels[i].textContent.charAt(0);
+    if (texto === letter || texto===""||texto===undefined) {
+      label.style.visibility =  'hidden';
     }
   }
 }
@@ -122480,7 +122426,7 @@ function addCheckboxListeners(precastElements, viewer) {
       const artPieza = this.getAttribute('data-art-pieza');
       const visibleIds = [];
       const parentText = this.parentNode.textContent.trim();
-      parentText.charAt(0).toUpperCase();
+      const letter = parentText.charAt(0).toUpperCase();
       let prevEl = null;
       precastElements.forEach(function(el, index) {
         if (el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
@@ -122496,8 +122442,16 @@ function addCheckboxListeners(precastElements, viewer) {
       });
       if (isChecked) {
         showAllItems(viewer, visibleIds);
+        
       } else {
         hideAllItems(viewer, visibleIds);
+        
+        removeLabels(letter);
+        const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
+        if (button && button.classList.contains('pulsado')) {
+          button.classList.remove('pulsado');
+          removeLabels(letter);
+        }
       }
     });
   }
@@ -122561,68 +122515,111 @@ async function generateLabels(expressIDs) {
 
 function generaBotonesNumCamion(camionesUnicos) {
   viewer.IFC.selector.unpickIfcItems();
-  
+
   const btnNumCamiones = document.getElementById("divNumCamiones");
   let botonesActivos = 0; // contador de botones activos
 
-  btnNumCamiones.innerHTML = ""; //limpia el div antes de generar los botones
+  btnNumCamiones.innerHTML = ""; // limpia el div antes de generar los botones
   agregarBotonCero();
   camionesUnicos.sort((a, b) => a - b); // ordena los nº de camion de menor a mayor
-  
+
+  const checkboxGroup = document.getElementsByClassName("checkbox-group");
+
   camionesUnicos.forEach(function(camion) {
-      const btn = document.createElement("button");
-      btn.setAttribute("class","btnNumCamion");
-      btn.textContent = camion;
-      
+    const btn = document.createElement("button");
+    btn.setAttribute("class", "btnNumCamion");
+    btn.textContent = camion;
+
+    precastElements.forEach(function(precastElement) {
+      if (parseInt(precastElement.Camion) === camion) {
+        const tipoTransporte = precastElement.tipoTransporte;
+        if (tipoTransporte.includes("E")) {
+          btn.style.backgroundColor = "#6d4c90";
+        } else if (tipoTransporte.includes("A")) {
+          btn.style.backgroundColor = "#4c7a90";
+        } else if (tipoTransporte.includes("C")) {
+          btn.style.backgroundColor = "#90834c";
+        }
+      }
+    });
+
+    btnNumCamiones.appendChild(btn);
+
+    btn.addEventListener("click", function() {
+      const expressIDs = [];
       precastElements.forEach(function(precastElement) {
-          if (parseInt(precastElement.Camion) === camion) {
-              const tipoTransporte = precastElement.tipoTransporte;
-              if (tipoTransporte.includes("E")) {
-                  btn.style.backgroundColor = "#6d4c90";
-              } else if (tipoTransporte.includes("A")) {
-                  btn.style.backgroundColor = "#4c7a90";
-              } else if (tipoTransporte.includes("C")) {
-                  btn.style.backgroundColor = "#90834c";
-              }
-          }
+        if (parseInt(precastElement.Camion) === camion) {
+          expressIDs.push(precastElement.expressID);
+        }
       });
-      
-      btnNumCamiones.appendChild(btn);
-      
-      btn.addEventListener("click", function() {
-          const expressIDs = [];
-          precastElements.forEach(function(precastElement) {
-              if (parseInt(precastElement.Camion) === camion) {
-                  expressIDs.push(precastElement.expressID);
-                  
-              }
-          });
-          const isActive = btn.classList.contains("active");
-          if (isActive) {
-              viewer.IFC.selector.unpickIfcItems();
-              activeExpressIDs = activeExpressIDs.filter(id => !expressIDs.includes(id));
 
-              hideAllItems(viewer, expressIDs);
-              btn.classList.remove("active");
-              btn.style.justifyContent = "center";
-              btn.style.color = "";
-              botonesActivos--;
-          } else {
-            activeExpressIDs = activeExpressIDs.concat(expressIDs);
+      const isActive = btn.classList.contains("active");
+      if (isActive) {
+        viewer.IFC.selector.unpickIfcItems();
+        activeExpressIDs = activeExpressIDs.filter(
+          id => !expressIDs.includes(id)
+        );
 
-              viewer.IFC.selector.unpickIfcItems();
-              hideAllItems(viewer, allIDs);
-              showAllItems(viewer, activeExpressIDs);
-              btn.classList.add("active");
-              btn.style.color = "red";
-              botonesActivos++;
-          }
-          if (botonesActivos === 0) { // si las cargas están desactivados muestra elementos que faltan por transportar
-              showAllItems(viewer, allIDs);
-          }
-      });
+        hideAllItems(viewer, expressIDs);
+        btn.classList.remove("active");
+        btn.style.justifyContent = "center";
+        btn.style.color = "";
+        botonesActivos--;
+      } else {
+        activeExpressIDs = activeExpressIDs.concat(expressIDs);
+
+        viewer.IFC.selector.unpickIfcItems();
+        hideAllItems(viewer, allIDs);
+        showAllItems(viewer, activeExpressIDs);
+        btn.classList.add("active");
+        btn.style.color = "red";
+        botonesActivos++;
+      }
+
+      if (botonesActivos === 0) {
+        showAllItems(viewer, allIDs);
+        enableCheckboxes();
+        
+      } else {
+        disableCheckboxes();
+      }
+    });
   });
+
+  function disableCheckboxes() {
+    console.log("DESHABILITADOS");
+    for (let i = 0; i < checkboxGroup.length; i++) {
+      const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
+      
+      for (let j = 0; j < checkboxes.length; j++) {
+        checkboxes[j].disabled = true;
+      }
+    }
+    generateLabels(activeExpressIDs);
+  }
+
+  function enableCheckboxes() {
+    console.log("HABILITADOS");
+    for (let i = 0; i < checkboxGroup.length; i++) {
+      const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
+      
+      for (let j = 0; j < checkboxes.length; j++) {
+        checkboxes[j].disabled = false;
+      }
+    }
+    removeLabels();
+  }
+  function removeLabels() {
+    const labels = document.querySelectorAll('.pieza-label');
+    labels.forEach(function(label) {
+      
+      label.style.visibility = "hidden";
+      
+    });
+  }
 }
+
+
 
 let activeExpressIDs = [];
 function obtenerValorCamion(precastElements) {
