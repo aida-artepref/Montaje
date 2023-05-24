@@ -121956,28 +121956,28 @@ let uniqueTypes=[];
 let precastElements=[];
 
 async function loadModel(url) {
-   model = await viewer.IFC.loadIfcUrl(url);
+  model = await viewer.IFC.loadIfcUrl(url);
 
-  // Crear material para los elementos sólidos
-  const solidMaterial = new MeshStandardMaterial({ color: "green" });
-  model.material = solidMaterial;
+  // // Crear material para los elementos sólidos
+  // const solidMaterial = new MeshStandardMaterial({ color: "green" });
 
-  // Crear material para los bordes
-  const edgeMaterial = new LineBasicMaterial({ color: "black" });
+  // // Crear material para los bordes
+  // const edgeMaterial = new LineBasicMaterial({ color: "black" });
 
-  // Crear geometría de bordes y añadir a escena
-  const edges = new EdgesGeometry(model.geometry);
-  const edgeMesh = new LineSegments(edges, edgeMaterial);
+  // // Crear geometría de bordes y añadir a escena
+  // const edges = new EdgesGeometry(model.geometry);
+  // const edgeMesh = new LineSegments(edges, edgeMaterial);
 
-  // Crear grupo y agregar modelo y líneas
-  const group = new Group();
-  group.add(model);
-  group.add(edgeMesh);
+  // // Crear grupo y agregar modelo y líneas
+  // const group = new Group();
+  // group.add(model);
+  // group.add(edgeMesh);
 
-  // Añadir grupo a la escena
-  scene.add(group);
+  // scene.add(group);
 
   getPlantas(model);
+  //TODO: REVISAR rendimiento al cargar modelo
+  //createPrecastElementsArray(model.modelID);
 
   createPrecastElementsArray(model.modelID).then((precastElements) => {
     cargaGlobalIdenPrecast();
@@ -121989,6 +121989,13 @@ async function loadModel(url) {
 
   let subset = getWholeSubset(viewer, model, allIDs);
   replaceOriginalModelBySubset(viewer, model, subset);
+
+//  Colorear los elementos sólidos, excepto los IfcBuildingElementProxy
+  // model.traverse((element) => {
+  //   if (element instanceof Mesh && !(element.userData.IfcEntity === "IfcBuildingElementProxy")) {
+  //     element.material = solidMaterial;
+  //   }
+  // });
 }
 
 async function getPlantas(model){
@@ -122055,7 +122062,7 @@ async function createPrecastElementsArray(modelID){
       const exists = uniqueTypes.includes(node.type);
 
       // TODO: elementos de IFC excluidos BUILDING y SITE
-      if (!exists && node.type !== "IFCBUILDING" && node.type !== "IFCSITE" && node.type !== "IFCBUILDINGSTOREY") {
+      if (!exists && node.type !== "IFCBUILDING" && node.type !== "IFCSITE" && node.type !== "IFCBUILDINGSTOREY" && node.type !== "IFCELEMENTASSEMBLY") {
           precastElements.push({expressID: node.expressID, ifcType: node.type});
       }
 
@@ -122074,6 +122081,7 @@ async function createPrecastElementsArray(modelID){
 
   return precastElements;
 }
+
 function getAllIds(ifcModel) {
   return Array.from(
       new Set(ifcModel.geometry.attributes.expressID.array),
@@ -122116,57 +122124,81 @@ function replaceOriginalModelBySubset(viewer, model, subset) {
 }
 
 container.onclick = async () => {
+  if (!propActive) return;
   const found = await viewer.IFC.selector.pickIfcItem(false);
-  if (found === null || found === undefined) return;
+  if (found === null || found === undefined){ 
+      const container=document.getElementById('propiedades-container');
+      container.style.visibility="hidden";
+      viewer.IFC.selector.unpickIfcItems();
+      return;
+  }
   const expressID = found.id;
 
-  // recorrer el array precastElements para buscar la posición del objeto con el mismo expressID
-  const index = precastElements.findIndex((obj) => obj.expressID === expressID);
-  if (index === -1) return;
-  // obtener el valor de expressID del objeto en la posición anterior
-  const prevObj = precastElements[index - 1];
-  const prevExpressID = prevObj ? prevObj.expressID : null;//Si prevObj tiene un valor, entonces prevExpressID es igual a prevObj.expressID, sino prevExpressID es null
-
-  const props = await viewer.IFC.getProperties(found.modelID, prevExpressID, true, true);
-
-  props.mats;
-  const psets = props.psets;
-  props.type;
-  delete props.mats;
-  delete props.psets;
-  delete props.type;
-
-  for (let pset in psets) {
-    let properties = psets[pset].HasProperties;
-    if (psets[pset] !== IfcElementQuantity) {
-        let ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ;
-        for (let property in properties) {
-            if (properties[property].Name.value === 'ART_Pieza') {
-                ART_Pieza =  properties[property].NominalValue.value;
-                console.log(ART_Pieza+ " Nombre");
-            }
-            if (properties[property].Name.value === 'ART_CoordX') {
-                ART_CoordX =  properties[property].NominalValue.value;
-                console.log(ART_CoordX+ " X");
-            }
-            if (properties[property].Name.value === 'ART_CoordY') {
-                ART_CoordY =  properties[property].NominalValue.value;
-                console.log(ART_CoordY+ " Y");
-            }
-            if (properties[property].Name.value === 'ART_CoordZ') {
-                ART_CoordZ = properties[property].NominalValue.value;
-                console.log(ART_CoordZ+ " Z");
-            }
-        }
-        muestraNombrePiezaOnClick(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
-    }
-}
+  let ART_Pieza = null;
+  for (const precast of precastElements) {
+      if (precast.expressID === expressID ) {
+          ART_Pieza = precast['ART_Pieza'];
+          ART_Longitud = precast['ART_Longitud'];
+          ART_Volumen = precast['ART_Volumen'];
+          break;
+      }
+  }
+  muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen);
 };
 
+function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen) {
+  // Convertir a números de punto flotante
+  const longitudNum = parseFloat(ART_Longitud);
+  const volumenNum = parseFloat(ART_Volumen);
+
+  // Limitar a dos decimales
+  const longitudFormatted = longitudNum.toFixed(2);
+  const volumenFormatted = (volumenNum * 2.5).toFixed(2);
+
+  const propiedadesDiv = document.createElement('div');
+  propiedadesDiv.classList.add('propiedades');
+  
+  const piezaLabel = document.createElement('p');
+  piezaLabel.innerHTML = `Pieza: <strong>${ART_Pieza}</strong>`;
+
+  
+  const longitudLabel = document.createElement('p');
+  longitudLabel.innerHTML = `Longitud: <strong>${longitudFormatted}</strong>`;
+  
+  const volumenLabel = document.createElement('p');
+  volumenLabel.innerHTML = `Peso: <strong>${volumenFormatted}</strong>`;
+  
+  propiedadesDiv.appendChild(piezaLabel);
+  propiedadesDiv.appendChild(longitudLabel);
+  propiedadesDiv.appendChild(volumenLabel);
+  
+  const propiedadesContainer = document.getElementById('propiedades-container');
+  propiedadesContainer.innerHTML = ''; // Limpia el contenido existente
+  propiedadesContainer.style.visibility="visible";
+  propiedadesContainer.appendChild(propiedadesDiv);
+}
+
+
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+const propButton = document.getElementById('btn-lateral-propiedades');
+let propActive= false;
+propButton.onclick= () => {
+  if(propActive){
+    propActive=!propActive;
+    propButton.classList.remove('active');
+    const propiedadesContainer = document.getElementById('propiedades-container');
+  propiedadesContainer.innerHTML = '';
+  viewer.IFC.selector.unpickIfcItems();
+  }else {
+    propActive=!propActive;
+    propButton.classList.add('active');
+    
+  }
+
+};
+
 // Seccion button - corte
 const cutButton = document.getElementById('btn-lateral-seccion');
-
 let cutActive = false;
 cutButton.onclick = () => {
     if(cutActive) {
@@ -122291,31 +122323,14 @@ GUI.importer.addEventListener("change", function(e) {
     checkboxContainer.innerHTML = generateCheckboxes(precastElements);
     checkboxContainer.style.visibility = "visible"; 
     addCheckboxListeners(precastElements, viewer);
-    // addBotonCheckboxListeners();
-    
+  
     camionesUnicos = obtenerValorCamion(precastElements);
     generaBotonesNumCamion(camionesUnicos);
   })
   .catch(error => console.error(error));
 });
 
-function muestraNombrePiezaOnClick(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ){
-  console.log(ART_Pieza,ART_CoordX, ART_CoordY, ART_CoordZ);
-  if(ART_Pieza===undefined ||ART_CoordX===undefined ||ART_CoordY===undefined||ART_CoordZ===undefined){
-      return;
-  }else {
-  const label = document.createElement('p');
-  label.textContent = ART_Pieza;
-  label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
-  const labelObject=new CSS2DObject (label);
-  labelObject.position.set(parseFloat(ART_CoordX)/1000, parseFloat( ART_CoordZ)/1000, - parseFloat(ART_CoordY)/1000);
-  scene.add(labelObject);
-  }
-} 
-
-function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
-  console.log(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
-
+function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ, expressID) {
   if (ART_Pieza === undefined || ART_CoordX === undefined || ART_CoordY === undefined || ART_CoordZ === undefined) {
     return;
   } else {
@@ -122337,6 +122352,7 @@ function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
       const label = document.createElement('p');
       label.textContent = ART_Pieza;
       label.classList.add('pieza-label'); // Agregar una clase para identificar estas etiquetas
+      label.id = expressID;
       const labelObject = new CSS2DObject(label);
       labelObject.position.set(parseFloat(ART_CoordX) / 1000, parseFloat(ART_CoordZ) / 1000, -parseFloat(ART_CoordY) / 1000);
       scene.add(labelObject);
@@ -122347,7 +122363,7 @@ function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ) {
 function generateCheckboxes(precastElements) {
   //agrupa los elementos por la primera letra de la propiedad ART_Pieza
   const groupedElements = precastElements.reduce((acc, el) => {
-    if (el.ART_Pieza===0 ||el.ART_Pieza==="0" ) {
+    if (el.ART_Pieza===0 ||el.ART_Pieza==="0" ||el.ART_Pieza==="" || el.ART_Pieza===undefined) {
       return acc;
     }
     const firstLetter = el.ART_Pieza.charAt(0).toUpperCase();
@@ -122367,8 +122383,11 @@ function generateCheckboxes(precastElements) {
     html += `</div>`;
     html += `</div>`;
   });
+
   setTimeout(() => {
+    
     addBotonCheckboxListeners();
+   
   }, 0);
   return html;
 }
@@ -122376,76 +122395,66 @@ function generateCheckboxes(precastElements) {
 function addBotonCheckboxListeners() {
   const buttons = document.querySelectorAll('.btnCheck');
   for (let i = 0; i < buttons.length; i++) {
-    buttons[i].addEventListener('click', function() {
-      const letter = this.dataset.artPieza;
-      this.checked;
-      const artPieza = this.getAttribute('data-art-pieza');
-      const visibleIds = [];
-      this.parentNode.textContent.trim();
-      let prevEl = null;
-      precastElements.forEach(function(el, index) {
-        if (el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
-          const nextEl = precastElements[index + 1];
-          if (prevEl) {
-            visibleIds.push(prevEl.expressID);
+      buttons[i].addEventListener('click', function() {
+          this.dataset.artPieza;
+          this.checked;
+          const artPieza = this.getAttribute('data-art-pieza');
+          const visibleIds = [];
+          this.parentNode.textContent.trim();
+          precastElements.forEach(function(el, index) {
+              if (allIDs.includes(el.expressID)) {
+                  if (el.ART_Pieza === 0 || el.ART_Pieza === "0" || el.ART_Pieza === "" ||el.ART_Pieza=== undefined) {
+                      return ;
+                  }
+                  if (el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
+                      visibleIds.push(el.expressID);
+                      }
+              }
+          });
+          if (this.classList.contains('pulsado')) {
+              this.classList.remove('pulsado');
+              removeLabels(visibleIds);
+          } else {
+              this.classList.add('pulsado');
+              generateLabels(visibleIds);
           }
-          if (nextEl) {
-            visibleIds.push(nextEl.expressID);
-          }
-          prevEl = el;
-        }
       });
-      if (this.classList.contains('pulsado')) {
-        this.classList.remove('pulsado');
-        removeLabels(letter);
-      } else {
-        this.classList.add('pulsado');
-        filtrarVisibleIds(visibleIds);
-      }
-    });
   }
 }
-
-function removeLabels(letter) {
-  const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label-item"
+function removeLabels(expressIDs) {
+  const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label"
   for (let i = 0; i < labels.length; i++) {
-    const label = labels[i];
-    const texto = labels[i].textContent.charAt(0);
-    if (texto === letter || texto===""||texto===undefined) {
-      label.style.visibility =  'hidden';
-    }
+      const label = labels[i];
+      const labelID = parseInt(label.id);
+      if (expressIDs.includes(labelID)) {
+          label.style.visibility = 'hidden';
+      }
   }
 }
 
 function addCheckboxListeners(precastElements, viewer) {
   const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+  
   for (let i = 0; i < checkboxes.length; i++) {
     checkboxes[i].addEventListener('change', function() {
       viewer.IFC.selector.unpickIfcItems();
-      const isChecked = this.checked;
+      const isNotChecked = this.checked;
       const artPieza = this.getAttribute('data-art-pieza');
       const visibleIds = [];
       const parentText = this.parentNode.textContent.trim();
       const letter = parentText.charAt(0).toUpperCase();
-      let prevEl = null;
-      precastElements.forEach(function(el, index) {
-        if (el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
-          const nextEl = precastElements[index + 1];
-          if (prevEl) {
-            visibleIds.push(prevEl.expressID);
-          }
-          if (nextEl) {
-            visibleIds.push(nextEl.expressID);
-          }
-          prevEl = el;
+      
+      precastElements.forEach(function(el) {
+        if (el.ART_Pieza && el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
+          visibleIds.push(el.expressID);
         }
       });
-      if (isChecked) {
+      console.log(visibleIds);
+      if (isNotChecked) {
         showAllItems(viewer, visibleIds);
         
       } else {
-        hideAllItems(viewer, visibleIds);
-        
+          hideAllItems(viewer, visibleIds);
         removeLabels(letter);
         const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
         if (button && button.classList.contains('pulsado')) {
@@ -122457,61 +122466,23 @@ function addCheckboxListeners(precastElements, viewer) {
   }
 }
 
-let elementosValidos=[];
-function filtrarVisibleIds( visibleIds) {
-  for (let i = 0; i < visibleIds.length; i++) {
-    // Obtenemos el expressID del elemento actual
-    const expressIDActual = visibleIds[i];
-
-    // Buscamos en el array precastElements un elemento que tenga el mismo expressID
-    const elemento = precastElements.find(e => e.expressID === expressIDActual);
-
-    // Verificamos si el elemento existe y si su propiedad ifcType es diferente de 'IFCELEMENTASSEMBLY'
-    if (!elemento || elemento.ifcType !== 'IFCELEMENTASSEMBLY') {
-      // Si cumple estas condiciones, añadimos el expressID al nuevo array elementosValidos
-      elementosValidos.push(expressIDActual);
-    }
-  }
-  console.log (elementosValidos+"ELEMENT");
-  generateLabels(elementosValidos);
-  elementosValidos=[];
-}
-
 async function generateLabels(expressIDs) {
   for (const expressID of expressIDs) {
-    const index = precastElements.findIndex((obj) => obj.expressID === expressID);
-    if (index === -1) continue;
-
-    const prevObj = precastElements[index - 1];
-    const prevExpressID = prevObj ? prevObj.expressID : null;
-
-    const props = await viewer.IFC.getProperties(model.modelID, prevExpressID, true, true);
-    const psets = props.psets;
-
-    for (const pset in psets) {
-      let properties = psets[pset].HasProperties;
-      if (psets[pset] !== IfcElementQuantity) {
-        let ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ;
-        for (const property in properties) {
-          if (properties[property].Name.value === 'ART_Pieza') {
-            ART_Pieza =  properties[property].NominalValue.value;
-            console.log(ART_Pieza);
-          }
-          if (properties[property].Name.value === 'ART_CoordX') {
-            ART_CoordX =  properties[property].NominalValue.value;
-          }
-          if (properties[property].Name.value === 'ART_CoordY') {
-            ART_CoordY =  properties[property].NominalValue.value;
-          }
-          if (properties[property].Name.value === 'ART_CoordZ') {
-            ART_CoordZ = properties[property].NominalValue.value;
-          }
-        }
-        muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ);
+    let ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ;
+    
+    for (const precast of precastElements) {
+      if (precast.expressID === expressID) {
+        ART_Pieza = precast['ART_Pieza'];
+        ART_CoordX = precast['ART_CoordX'];
+        ART_CoordY = precast['ART_CoordY'];
+        ART_CoordZ = precast['ART_CoordZ'];
+        break;
       }
     }
+    muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ, expressID);
   }
 }
+
 
 function generaBotonesNumCamion(camionesUnicos) {
   viewer.IFC.selector.unpickIfcItems();
@@ -122539,7 +122510,9 @@ function generaBotonesNumCamion(camionesUnicos) {
           btn.style.backgroundColor = "#4c7a90";
         } else if (tipoTransporte.includes("C")) {
           btn.style.backgroundColor = "#90834c";
-        }
+        }else if (tipoTransporte.includes("Tu")) {
+          btn.style.backgroundColor = "#9e9e9e";
+      }
       }
     });
 
@@ -122555,39 +122528,40 @@ function generaBotonesNumCamion(camionesUnicos) {
 
       const isActive = btn.classList.contains("active");
       if (isActive) {
-        viewer.IFC.selector.unpickIfcItems();
-        activeExpressIDs = activeExpressIDs.filter(
-          id => !expressIDs.includes(id)
-        );
+          viewer.IFC.selector.unpickIfcItems();
+          activeExpressIDs = activeExpressIDs.filter(
+            id => !expressIDs.includes(id)
+          );
 
-        hideAllItems(viewer, expressIDs);
-        btn.classList.remove("active");
-        btn.style.justifyContent = "center";
-        btn.style.color = "";
-        botonesActivos--;
+          hideAllItems(viewer, expressIDs);
+          btn.classList.remove("active");
+          btn.style.justifyContent = "center";
+          btn.style.color = "";
+          botonesActivos--;
+          removeLabels(expressIDs);
       } else {
-        activeExpressIDs = activeExpressIDs.concat(expressIDs);
+          activeExpressIDs = activeExpressIDs.concat(expressIDs);
 
-        viewer.IFC.selector.unpickIfcItems();
-        hideAllItems(viewer, allIDs);
-        showAllItems(viewer, activeExpressIDs);
-        btn.classList.add("active");
-        btn.style.color = "red";
-        botonesActivos++;
+          viewer.IFC.selector.unpickIfcItems();
+          hideAllItems(viewer, allIDs);
+          showAllItems(viewer, activeExpressIDs);
+          btn.classList.add("active");
+          btn.style.color = "red";
+          botonesActivos++;
+          generateLabels(activeExpressIDs);
       }
 
       if (botonesActivos === 0) {
         showAllItems(viewer, allIDs);
         enableCheckboxes();
-        
       } else {
         disableCheckboxes();
+        disableBtnCheckboxes();
       }
     });
   });
 
   function disableCheckboxes() {
-    console.log("DESHABILITADOS");
     for (let i = 0; i < checkboxGroup.length; i++) {
       const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
       
@@ -122595,11 +122569,16 @@ function generaBotonesNumCamion(camionesUnicos) {
         checkboxes[j].disabled = true;
       }
     }
-    generateLabels(activeExpressIDs);
   }
+  function disableBtnCheckboxes() {
+      const checkboxContainer = document.getElementById('checkbox-container');
+      const buttons = checkboxContainer.querySelectorAll('.checkbox-button-container button');
 
+      buttons.forEach((button) => {
+          button.disabled = true;
+      });
+  }
   function enableCheckboxes() {
-    console.log("HABILITADOS");
     for (let i = 0; i < checkboxGroup.length; i++) {
       const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
       
@@ -122607,16 +122586,9 @@ function generaBotonesNumCamion(camionesUnicos) {
         checkboxes[j].disabled = false;
       }
     }
-    removeLabels();
+    
   }
-  function removeLabels() {
-    const labels = document.querySelectorAll('.pieza-label');
-    labels.forEach(function(label) {
-      
-      label.style.visibility = "hidden";
-      
-    });
-  }
+  
 }
 
 
@@ -122642,6 +122614,7 @@ function hideAllItems(viewer, ids) {
             'full-model-subset',
         );
     }); 
+    
 }
 
 function showAllItems(viewer, ids) {

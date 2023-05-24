@@ -30,6 +30,19 @@ html{
   height: 100vh;
 }
 
+#propiedades-container {
+  visibility: visible;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  bottom: 100px; 
+  right: 50px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.7);
+  margin: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.5); /* Añade un borde de 1 píxel y color suave */
+  border-radius: 20px;
+}
 header {
     color: var(--light-gray);
     padding: 1rem;
