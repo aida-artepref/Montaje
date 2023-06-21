@@ -149,6 +149,7 @@ label{
 .app {
     display: flex;
     height: 100vh;
+    width: calc(100% - 3.2rem);
     border: 1px solid var(--heavy-grey);
     position: relative; /* Set container position as relative */
     overflow: hidden;
@@ -251,6 +252,27 @@ canvas {
   margin-top: 5px; 
   text-align: center !important;
 }
+.activoBtnLabelPlanta {
+  padding: 0.7rem;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  font-weight: 500;
+  color: #000 !important;
+  background: var(--orange) !important;
+  border: 1px solid var(--heavy-grey);
+  border-radius: 5px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease 0s;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 30px;
+  margin-top: 5px; 
+  text-align: center !important;
+}
 .button-carga-ifc {
   padding: 0.7rem;
   font-size: 12px;
@@ -289,6 +311,12 @@ canvas {
   width: 50px;
   height: 50px;
   visibility: hidden;
+}
+
+.additional-button {
+  
+  display: inline-block;
+  /* Agrega otros estilos según sea necesario */
 }
 
 #botonImportar{

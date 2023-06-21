@@ -121901,7 +121901,7 @@ const viewer = new IfcViewerAPI({container, backgroundColor: new Color("#EDE8BA"
 const scene = viewer.context.scene.scene;
 viewer.clipper.active = true;
 viewer.grid.setGrid(100,100);
-viewer.axes.setAxes();
+
 
 const labelRenderer = new CSS2DRenderer();
 labelRenderer.setSize( window.innerWidth, window.innerHeight );
@@ -121946,8 +121946,6 @@ GUI.input.onchange = async (event) => {
     const url=URL.createObjectURL(file);
     loadModel(url); 
 };
-
-let allPlans;
 let model;
 let allIDs;
 let idsTotal;
@@ -121957,23 +121955,6 @@ let precastElements=[];
 
 async function loadModel(url) {
   model = await viewer.IFC.loadIfcUrl(url);
-
-  // // Crear material para los elementos sólidos
-  // const solidMaterial = new MeshStandardMaterial({ color: "green" });
-
-  // // Crear material para los bordes
-  // const edgeMaterial = new LineBasicMaterial({ color: "black" });
-
-  // // Crear geometría de bordes y añadir a escena
-  // const edges = new EdgesGeometry(model.geometry);
-  // const edgeMesh = new LineSegments(edges, edgeMaterial);
-
-  // // Crear grupo y agregar modelo y líneas
-  // const group = new Group();
-  // group.add(model);
-  // group.add(edgeMesh);
-
-  // scene.add(group);
 
   getPlantas(model);
   //TODO: REVISAR rendimiento al cargar modelo
@@ -121989,6 +121970,8 @@ async function loadModel(url) {
 
   let subset = getWholeSubset(viewer, model, allIDs);
   replaceOriginalModelBySubset(viewer, model, subset);
+  const btnImport = document.getElementById("botonImportar");
+  btnImport.style.visibility = 'visible';
 
 //  Colorear los elementos sólidos, excepto los IfcBuildingElementProxy
   // model.traverse((element) => {
@@ -121998,87 +121981,251 @@ async function loadModel(url) {
   // });
 }
 
-async function getPlantas(model){
+// async function getPlantas(model){
   
+//   await viewer.plans.computeAllPlanViews(model.modelID);
+
+//     const lineMaterial = new LineBasicMaterial({ color: 'black' });
+// 	  const baseMaterial = new MeshBasicMaterial({
+//         polygonOffset: true,
+//         polygonOffsetFactor: 1, // positive value pushes polygon further away
+//         polygonOffsetUnits: 1,
+//       });
+
+// 	viewer.edges.create('example', model.modelID, lineMaterial, baseMaterial);
+
+//   const containerForPlans = document.getElementById('button-container');
+//   allPlans = viewer.plans.getAll(model.modelID);
+  
+//   for (const plan of allPlans) {
+//     const currentPlan = viewer.plans.planLists[model.modelID][plan];
+  
+//     const button = document.createElement('button');
+//     containerForPlans.appendChild(button);
+//     button.textContent = currentPlan.name;
+  
+//     button.onclick = () => {
+//       viewer.plans.goTo(model.modelID, plan);
+//       viewer.edges.toggle('example', true);
+      
+//       // Busca cualquier botón con la clase "activo" y quítala
+//       const activeButton = containerForPlans.querySelector('button.activo');
+//       if (activeButton) {
+//         activeButton.classList.remove('activo');
+//       }
+  
+//       // Agrega la clase "activo" al botón actualmente seleccionado
+//       button.classList.add('activo');
+//     };
+
+//     const btnImport = document.getElementById("botonImportar");
+//     btnImport.style.visibility = 'visible';
+
+//   }
+  
+//     const button = document.createElement('button');
+//     containerForPlans.appendChild(button);
+//     button.textContent = 'Exit floorplans';
+//     button.onclick = () => {
+//       viewer.plans.exitPlanView();
+//       viewer.edges.toggle('example', false);
+//       const activeButton = containerForPlans.querySelector('button.activo');
+//       if (activeButton) {
+//         activeButton.classList.remove('activo');
+//       }
+//     };
+// }
+function findNodeWithExpressID(node, expressID) {
+  if (node.expressID === expressID) {
+    return node;
+  }
+
+  for (const childNode of node.children) {
+    const foundNode = findNodeWithExpressID(childNode, expressID);
+    if (foundNode) {
+      return foundNode;
+    }
+  }
+
+  return null;
+}
+
+async function getPlantas(model) {
   await viewer.plans.computeAllPlanViews(model.modelID);
 
-    const lineMaterial = new LineBasicMaterial({ color: 'black' });
-	  const baseMaterial = new MeshBasicMaterial({
-        polygonOffset: true,
-        polygonOffsetFactor: 1, // positive value pushes polygon further away
-        polygonOffsetUnits: 1,
-      });
+  const lineMaterial = new LineBasicMaterial({ color: 'black' });
+  const baseMaterial = new MeshBasicMaterial({
+    polygonOffset: true,
+    polygonOffsetFactor: 1, 
+    polygonOffsetUnits: 1,
+  });
 
-	viewer.edges.create('example', model.modelID, lineMaterial, baseMaterial);
+  viewer.edges.create('example', model.modelID, lineMaterial, baseMaterial);
 
   const containerForPlans = document.getElementById('button-container');
-  allPlans = viewer.plans.getAll(model.modelID);
-  
+  const buttonGroup = document.createElement('div'); // nuevo div para agrupar botones
+  containerForPlans.appendChild(buttonGroup);
+  buttonGroup.style.display = 'flex'; 
+  buttonGroup.style.flexWrap = 'wrap'; 
+
+  const allPlans = viewer.plans.getAll(model.modelID);
+
   for (const plan of allPlans) {
-    const currentPlan = viewer.plans.planLists[model.modelID][plan];
-  
+    const currentPlan = viewer.plans.planLists[model.modelID][plan]; //Información  de cada planta
+
+    const divBotonesPlantas = document.createElement('div'); //contenedor para cada fila de botones
+    buttonGroup.appendChild(divBotonesPlantas);
+    divBotonesPlantas.style.display = 'flex'; 
+    divBotonesPlantas.style.alignItems = 'center';
+
     const button = document.createElement('button');
-    containerForPlans.appendChild(button);
-    button.textContent = currentPlan.name;
+    divBotonesPlantas.appendChild(button); 
+    button.textContent = currentPlan.name; 
+    button.setAttribute('data-express-id', currentPlan.expressID);
+
+    const btnLabelPlantas = document.createElement('button');
+    divBotonesPlantas.appendChild(btnLabelPlantas); 
+    btnLabelPlantas.textContent = 'N';
+    btnLabelPlantas.style.width = '30px'; 
+    btnLabelPlantas.style.marginLeft = '5px'; 
+    btnLabelPlantas.style.visibility = 'hidden';
+    btnLabelPlantas.classList.add('btnLabelPlanta');
+    const elementsArray = [];
+
+    button.onclick = async () => {
+      ocultarLabels();
+      const expressIDplanta = parseInt(button.dataset.expressId);
+      console.log("ExpressId: "+expressIDplanta+" de la planta: "+button.textContent);
+      // const elementsArray = [];
+    
+      try {
+        const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
+    
+        // recursiva para buscar los elementos hijos en la estructura 
+        function findElementsInChildren(node) {
+          for (const childNode of node.children) {
+            elementsArray.push(childNode.expressID);
+            findElementsInChildren(childNode);
+          }
+        }
+        // busca el nodo de la planta deseada en la estructura 
+        const plantaNode = findNodeWithExpressID(ifcProject, expressIDplanta);
+    
+        
+        if (plantaNode) {
+          
+          findElementsInChildren(plantaNode);
+          hideAllItems(viewer, idsTotal );
+          showAllItems(viewer, elementsArray);
+          console.log(elementsArray);
+
+          const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
+              btnLabelPlantasList.forEach((btnLabel) => {
+              btnLabel.style.visibility = 'hidden';
+          });
+
+          btnLabelPlantas.style.visibility = 'visible';
+          
+        } else {
+          console.log('No se encontró el nodo de la planta');
+        }
+      } catch (error) {
+        console.log('Error al obtener la estructura espacial:', error);
+      }
+
   
-    button.onclick = () => {
-      viewer.plans.goTo(model.modelID, plan);
-      viewer.edges.toggle('example', true);
-      
-      // Busca cualquier botón con la clase "activo" y quítala
+
       const activeButton = containerForPlans.querySelector('button.activo');
       if (activeButton) {
         activeButton.classList.remove('activo');
+        const correspondingBtnLabel = activeButton.nextElementSibling;
+        if (correspondingBtnLabel.classList.contains('btnLabelPlanta')) {
+          correspondingBtnLabel.style.visibility = 'hidden';
+          correspondingBtnLabel.classList.remove('activoBtnLabelPlanta'); // Remover la clase 'activoBtnLabelPlanta' cuando se oculta
+          
+        }
       }
-  
-      // Agrega la clase "activo" al botón actualmente seleccionado
       button.classList.add('activo');
     };
 
-    const btnImport = document.getElementById("botonImportar");
-    btnImport.style.visibility = 'visible';
-
+    btnLabelPlantas.onclick = async () => {
+      const activeBtnLabelPlanta = document.querySelector('.btnLabelPlanta.activoBtnLabelPlanta');
+    
+      // Si hay un botón activo y es el mismo que se hizo clic, quitar la clase
+      if (activeBtnLabelPlanta === btnLabelPlantas) {
+        btnLabelPlantas.classList.remove('activoBtnLabelPlanta');
+        removeLabels(elementsArray);
+      } else {
+        // Si hay un botón activo y no es el mismo que se hizo clic, eliminar la clase
+        if (activeBtnLabelPlanta) {
+          activeBtnLabelPlanta.classList.remove('activoBtnLabelPlanta');
+         
+        }
+        btnLabelPlantas.classList.add('activoBtnLabelPlanta');
+        generateLabels(elementsArray);
+      }
+    };
+    
+    
   }
   
     const button = document.createElement('button');
     containerForPlans.appendChild(button);
     button.textContent = 'Exit floorplans';
     button.onclick = () => {
-      viewer.plans.exitPlanView();
-      viewer.edges.toggle('example', false);
+      hideAllItems(viewer, idsTotal );
+      showAllItems(viewer, idsTotal);
+      ocultarLabels();
       const activeButton = containerForPlans.querySelector('button.activo');
       if (activeButton) {
         activeButton.classList.remove('activo');
       }
+      const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
+              btnLabelPlantasList.forEach((btnLabel) => {
+              btnLabel.style.visibility = 'hidden';
+              
+          });
     };
 }
 
+function ocultarLabels() {
+const piezaLabels = document.querySelectorAll('.pieza-label');
+      const expressIDsOcultar = [];
+
+      piezaLabels.forEach((element) => {
+        if (element.style.visibility !== 'hidden') {
+          const id = parseInt(element.id);
+          if (!isNaN(id)) {
+            expressIDsOcultar.push(id);
+          }
+        }
+      });
+      removeLabels(expressIDsOcultar);
+}
+
+
+
 async function createPrecastElementsArray(modelID){
   const ifcProject = await viewer.IFC.getSpatialStructure (modelID);
+  
 
   const constructPrecastElements = (node) => {
       const children = node.children;
-
       const exists = uniqueTypes.includes(node.type);
-
       // TODO: elementos de IFC excluidos BUILDING y SITE
       if (!exists && node.type !== "IFCBUILDING" && node.type !== "IFCSITE" && node.type !== "IFCBUILDINGSTOREY" && node.type !== "IFCELEMENTASSEMBLY") {
           precastElements.push({expressID: node.expressID, ifcType: node.type});
       }
-
       if(children.length === 0){
           return;    
       }
-
       children.forEach(child => {
           constructPrecastElements(child);
       }); 
   };
-
   ifcProject.children.forEach(child => {
       constructPrecastElements(child);
   });
-
   return precastElements;
 }
 
@@ -122124,43 +122271,65 @@ function replaceOriginalModelBySubset(viewer, model, subset) {
 }
 
 container.onclick = async () => {
-  if (!propActive) return;
   const found = await viewer.IFC.selector.pickIfcItem(false);
-  if (found === null || found === undefined){ 
-      const container=document.getElementById('propiedades-container');
-      container.style.visibility="hidden";
-      viewer.IFC.selector.unpickIfcItems();
-      return;
+  if (found === null || found === undefined) {
+    const container = document.getElementById('propiedades-container');
+    container.style.visibility = "hidden";
+    viewer.IFC.selector.unpickIfcItems();
+    return;
   }
   const expressID = found.id;
 
   let ART_Pieza = null;
-  for (const precast of precastElements) {
-      if (precast.expressID === expressID ) {
-          ART_Pieza = precast['ART_Pieza'];
-          ART_Longitud = precast['ART_Longitud'];
-          ART_Volumen = precast['ART_Volumen'];
-          break;
-      }
-  }
-  muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen);
-};
+  let ART_Longitud = null;
+  let ART_Volumen = null;
+  let ART_Ancho = null;
 
-function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen) {
-  // Convertir a números de punto flotante
+  for (const precast of precastElements) {
+    if (precast.expressID === expressID) {
+      ART_Pieza = precast['ART_Pieza'];
+      ART_Longitud = precast['ART_Longitud'];
+      ART_Volumen = precast['ART_Volumen'];
+      ART_Ancho = parseFloat(precast['ART_Ancho']).toFixed(2);
+      ART_Ancho = parseFloat(ART_Ancho);
+      break;
+    }
+  }
+
+  muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen, ART_Ancho);
+};
+function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen, ART_Ancho) {
+  const container = document.getElementById('propiedades-container');
+  container.style.visibility = "visible";
   const longitudNum = parseFloat(ART_Longitud);
   const volumenNum = parseFloat(ART_Volumen);
+  const longitudFormatted = longitudNum.toFixed(2); 
 
-  // Limitar a dos decimales
-  const longitudFormatted = longitudNum.toFixed(2);
-  const volumenFormatted = (volumenNum * 2.5).toFixed(2);
+  
+  const anchoNum = parseFloat(ART_Ancho.toFixed(2));// Asegura que ART_Ancho tenga dos decimales para realizar los condicionales
+
+  let volumenFormatted;
+
+  if (ART_Pieza.startsWith('T')) {
+    if (anchoNum === 0.2) {
+      volumenFormatted = (volumenNum * 1.6).toFixed(2);
+    } else if (anchoNum === 0.24) {
+      volumenFormatted = (volumenNum * 1.5).toFixed(2);
+    } else if (anchoNum === 0.16) {
+      volumenFormatted = (volumenNum * 1.875).toFixed(2);
+    } else {
+      volumenFormatted = (volumenNum * 2.5).toFixed(2);
+    }
+  } else {
+    volumenFormatted = (volumenNum * 2.5).toFixed(2);
+  }
+
 
   const propiedadesDiv = document.createElement('div');
   propiedadesDiv.classList.add('propiedades');
   
   const piezaLabel = document.createElement('p');
   piezaLabel.innerHTML = `Pieza: <strong>${ART_Pieza}</strong>`;
-
   
   const longitudLabel = document.createElement('p');
   longitudLabel.innerHTML = `Longitud: <strong>${longitudFormatted}</strong>`;
@@ -122174,7 +122343,6 @@ function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen) {
   
   const propiedadesContainer = document.getElementById('propiedades-container');
   propiedadesContainer.innerHTML = ''; // Limpia el contenido existente
-  propiedadesContainer.style.visibility="visible";
   propiedadesContainer.appendChild(propiedadesDiv);
 }
 
@@ -122183,6 +122351,7 @@ function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen) {
 const propButton = document.getElementById('btn-lateral-propiedades');
 let propActive= false;
 propButton.onclick= () => {
+  // viewer.plans.goTo(model.modelID, plan);
   if(propActive){
     propActive=!propActive;
     propButton.classList.remove('active');
@@ -122201,6 +122370,7 @@ propButton.onclick= () => {
 const cutButton = document.getElementById('btn-lateral-seccion');
 let cutActive = false;
 cutButton.onclick = () => {
+  
     if(cutActive) {
         cutActive = !cutActive;
         cutButton.classList.remove('active');
@@ -122238,11 +122408,15 @@ floorplanButton.onclick = () => {
     floorplansActive = !floorplansActive;
     floorplanButton.classList.remove('active');
     floorplansButtonContainer.classList.remove('visible');
-    viewer.plans.exitPlanView();
-    viewer.edges.toggle('example-edges', false);
+    // viewer.plans.exitPlanView();
+    // viewer.edges.toggle('example-edges', false);
+    hideAllItems(viewer, idsTotal );
+      showAllItems(viewer, idsTotal);
     floorplansButtonContainer.style.visibility = 'hidden';
-    viewer.plans.exitPlanView();
-    viewer.edges.toggle('example', false);
+    // viewer.plans.exitPlanView();
+    // viewer.edges.toggle('example', false);
+    hideAllItems(viewer, idsTotal );
+      showAllItems(viewer, idsTotal);
     //desactiva los botones de plantas cuando se apaga el boton que genera los planos
     const containerForButtons = document.getElementById('button-container');
     const buttons = containerForButtons.querySelectorAll('button');
@@ -122385,9 +122559,7 @@ function generateCheckboxes(precastElements) {
   });
 
   setTimeout(() => {
-    
     addBotonCheckboxListeners();
-   
   }, 0);
   return html;
 }
@@ -122421,6 +122593,7 @@ function addBotonCheckboxListeners() {
       });
   }
 }
+
 function removeLabels(expressIDs) {
   const labels = document.querySelectorAll('.pieza-label'); // Buscar todos los elementos con la clase "pieza-label"
   for (let i = 0; i < labels.length; i++) {
@@ -122473,14 +122646,15 @@ async function generateLabels(expressIDs) {
     for (const precast of precastElements) {
       if (precast.expressID === expressID) {
         ART_Pieza = precast['ART_Pieza'];
-        ART_CoordX = precast['ART_CoordX'];
-        ART_CoordY = precast['ART_CoordY'];
-        ART_CoordZ = precast['ART_CoordZ'];
+        ART_CoordX = precast['ART_cdgX'];
+        ART_CoordY = precast['ART_cdgY'];
+        ART_CoordZ = precast['ART_cdgZ'];
         break;
       }
     }
     muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ, expressID);
   }
+  
 }
 
 
