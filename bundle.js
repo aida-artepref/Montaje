@@ -122090,14 +122090,22 @@ async function getPlantas(model) {
     btnLabelPlantas.style.marginLeft = '5px'; 
     btnLabelPlantas.style.visibility = 'hidden';
     btnLabelPlantas.classList.add('btnLabelPlanta');
+
+
+    const btn2DPlantas = document.createElement('button');
+    divBotonesPlantas.appendChild(btn2DPlantas); 
+    btn2DPlantas.textContent = '2D';
+    btn2DPlantas.style.width = '30px'; 
+    btn2DPlantas.style.marginLeft = '5px'; 
+    btn2DPlantas.style.visibility = 'hidden';
+    btn2DPlantas.classList.add('btn2DPlanta');
     const elementsArray = [];
 
     button.onclick = async () => {
       ocultarLabels();
       const expressIDplanta = parseInt(button.dataset.expressId);
       console.log("ExpressId: "+expressIDplanta+" de la planta: "+button.textContent);
-      // const elementsArray = [];
-    
+      
       try {
         const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
     
@@ -122125,6 +122133,14 @@ async function getPlantas(model) {
           });
 
           btnLabelPlantas.style.visibility = 'visible';
+
+          const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
+              btn2DPlantasList.forEach((btn2D) => {
+                  btn2D.style.visibility = 'hidden';
+                  btn2D.classList.remove('activoBtn2DPlanta');
+              });
+
+          btn2DPlantas.style.visibility = 'visible';
           
         } else {
           console.log('No se encontró el nodo de la planta');
@@ -122140,7 +122156,7 @@ async function getPlantas(model) {
         activeButton.classList.remove('activo');
         const correspondingBtnLabel = activeButton.nextElementSibling;
         if (correspondingBtnLabel.classList.contains('btnLabelPlanta')) {
-          correspondingBtnLabel.style.visibility = 'hidden';
+          // correspondingBtnLabel.style.visibility = 'hidden';
           correspondingBtnLabel.classList.remove('activoBtnLabelPlanta'); // Remover la clase 'activoBtnLabelPlanta' cuando se oculta
           
         }
@@ -122159,13 +122175,25 @@ async function getPlantas(model) {
         // Si hay un botón activo y no es el mismo que se hizo clic, eliminar la clase
         if (activeBtnLabelPlanta) {
           activeBtnLabelPlanta.classList.remove('activoBtnLabelPlanta');
-         
         }
         btnLabelPlantas.classList.add('activoBtnLabelPlanta');
         generateLabels(elementsArray);
       }
     };
     
+    btn2DPlantas.onclick = () => {
+      if (btn2DPlantas.classList.contains('activoBtn2DPlanta')) {
+        btn2DPlantas.classList.remove('activoBtn2DPlanta');
+      } else {
+        btn2DPlantas.classList.add('activoBtn2DPlanta');
+        //cambio de vista 
+        // const camera = new IfcCamera();
+
+        // // Llamar a la función toggleProjection()
+        // camera.toggleProjection();
+          generatePlanta2D();
+      }
+    };
     
   }
   
@@ -122181,8 +122209,13 @@ async function getPlantas(model) {
         activeButton.classList.remove('activo');
       }
       const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
-              btnLabelPlantasList.forEach((btnLabel) => {
+          btnLabelPlantasList.forEach((btnLabel) => {
               btnLabel.style.visibility = 'hidden';
+              
+          });
+      const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
+          btn2DPlantasList.forEach((btn2D) => {
+            btn2D.style.visibility = 'hidden';
               
           });
     };
@@ -122203,7 +122236,47 @@ const piezaLabels = document.querySelectorAll('.pieza-label');
       removeLabels(expressIDsOcultar);
 }
 
+function generatePlanta2D(model) {
+  
+  // model.traverse((child) => {
+  //   if (child.isMesh) {
+  //     const lineMaterial = new LineBasicMaterial({ color: 'black' });
 
+  //     const geometry = new BufferGeometry();
+  //     geometry.setAttribute('position', new BufferAttribute(child.geometry.attributes.position.array, 3));
+
+  //     const lines = new LineSegments(geometry, lineMaterial);
+  //     scene.add(lines);
+  //   }
+  // });
+
+  // const camera=viewer.context.camera;
+  // console.log("camara: "+camera);
+
+
+
+  //const screenShot = viewer.context.renderer.newScreenshot(camera);
+  // CREA UN IMAGEN DE LA CAMARA EN ESA POSICION
+  const camera = viewer.context.getCamera();
+  console.log(camera.position);
+
+  console.log("camara: "+camera);
+  
+  camera.position.set(0, 10, 0);
+  camera.lookAt(new Vector3(0, 0, 0));
+  
+  // viewer.cameraControls.setLookAt(0, 10, 0, 0, 0, 0, true);
+
+
+  // const plantaRenderer = new WebGLRenderer({ antialias: true });
+  // plantaRenderer.setSize(window.innerWidth, window.innerHeight);
+  // document.body.appendChild(plantaRenderer.domElement);
+
+
+  // plantaRenderer.render( camera);
+
+ 
+}
 
 async function createPrecastElementsArray(modelID){
   const ifcProject = await viewer.IFC.getSpatialStructure (modelID);
@@ -122282,48 +122355,27 @@ container.onclick = async () => {
 
   let ART_Pieza = null;
   let ART_Longitud = null;
-  let ART_Volumen = null;
-  let ART_Ancho = null;
 
   for (const precast of precastElements) {
     if (precast.expressID === expressID) {
       ART_Pieza = precast['ART_Pieza'];
       ART_Longitud = precast['ART_Longitud'];
-      ART_Volumen = precast['ART_Volumen'];
-      ART_Ancho = parseFloat(precast['ART_Ancho']).toFixed(2);
-      ART_Ancho = parseFloat(ART_Ancho);
+      ART_Peso=precast['ART_Peso'];
+      // ART_Volumen = precast['ART_Volumen'];
+      // ART_Ancho = parseFloat(precast['ART_Ancho']).toFixed(2);
+      // ART_Ancho = parseFloat(ART_Ancho);
       break;
     }
   }
 
-  muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen, ART_Ancho);
+  muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso);
 };
-function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen, ART_Ancho) {
+function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso) {
   const container = document.getElementById('propiedades-container');
   container.style.visibility = "visible";
   const longitudNum = parseFloat(ART_Longitud);
-  const volumenNum = parseFloat(ART_Volumen);
+  const pesoNum = parseFloat(ART_Peso).toFixed(2);
   const longitudFormatted = longitudNum.toFixed(2); 
-
-  
-  const anchoNum = parseFloat(ART_Ancho.toFixed(2));// Asegura que ART_Ancho tenga dos decimales para realizar los condicionales
-
-  let volumenFormatted;
-
-  if (ART_Pieza.startsWith('T')) {
-    if (anchoNum === 0.2) {
-      volumenFormatted = (volumenNum * 1.6).toFixed(2);
-    } else if (anchoNum === 0.24) {
-      volumenFormatted = (volumenNum * 1.5).toFixed(2);
-    } else if (anchoNum === 0.16) {
-      volumenFormatted = (volumenNum * 1.875).toFixed(2);
-    } else {
-      volumenFormatted = (volumenNum * 2.5).toFixed(2);
-    }
-  } else {
-    volumenFormatted = (volumenNum * 2.5).toFixed(2);
-  }
-
 
   const propiedadesDiv = document.createElement('div');
   propiedadesDiv.classList.add('propiedades');
@@ -122334,12 +122386,12 @@ function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Volumen, ART_Ancho) {
   const longitudLabel = document.createElement('p');
   longitudLabel.innerHTML = `Longitud: <strong>${longitudFormatted}</strong>`;
   
-  const volumenLabel = document.createElement('p');
-  volumenLabel.innerHTML = `Peso: <strong>${volumenFormatted}</strong>`;
+  const pesoLabel = document.createElement('p');
+  pesoLabel.innerHTML = `Peso: <strong>${pesoNum}</strong>`;
   
   propiedadesDiv.appendChild(piezaLabel);
   propiedadesDiv.appendChild(longitudLabel);
-  propiedadesDiv.appendChild(volumenLabel);
+  propiedadesDiv.appendChild(pesoLabel);
   
   const propiedadesContainer = document.getElementById('propiedades-container');
   propiedadesContainer.innerHTML = ''; // Limpia el contenido existente
@@ -122425,6 +122477,17 @@ floorplanButton.onclick = () => {
         button.classList.remove('activo');
       }
     }
+    const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
+          btnLabelPlantasList.forEach((btnLabel) => {
+              btnLabel.style.visibility = 'hidden';
+              
+          });
+      const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
+          btn2DPlantasList.forEach((btn2D) => {
+            btn2D.style.visibility = 'hidden';
+              
+          });
+          ocultarLabels();
     
   } else {
     floorplansActive = !floorplansActive;
@@ -122615,7 +122678,7 @@ function addCheckboxListeners(precastElements, viewer) {
       const artPieza = this.getAttribute('data-art-pieza');
       const visibleIds = [];
       const parentText = this.parentNode.textContent.trim();
-      const letter = parentText.charAt(0).toUpperCase();
+      parentText.charAt(0).toUpperCase();
       
       precastElements.forEach(function(el) {
         if (el.ART_Pieza && el.ART_Pieza.charAt(0).toUpperCase() === artPieza) {
@@ -122628,11 +122691,11 @@ function addCheckboxListeners(precastElements, viewer) {
         
       } else {
           hideAllItems(viewer, visibleIds);
-        removeLabels(letter);
+        removeLabels(visibleIds);
         const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
         if (button && button.classList.contains('pulsado')) {
           button.classList.remove('pulsado');
-          removeLabels(letter);
+          removeLabels(visibleIds);
         }
       }
     });
@@ -122668,7 +122731,7 @@ function generaBotonesNumCamion(camionesUnicos) {
   agregarBotonCero();
   camionesUnicos.sort((a, b) => a - b); // ordena los nº de camion de menor a mayor
 
-  const checkboxGroup = document.getElementsByClassName("checkbox-group");
+  document.getElementsByClassName("checkbox-group");
 
   camionesUnicos.forEach(function(camion) {
     const btn = document.createElement("button");
@@ -122693,6 +122756,11 @@ function generaBotonesNumCamion(camionesUnicos) {
     btnNumCamiones.appendChild(btn);
 
     btn.addEventListener("click", function() {
+      let checkboxStates = {};
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(function (checkbox) {
+                checkboxStates[checkbox.id] = checkbox.checked;
+            });
       const expressIDs = [];
       precastElements.forEach(function(precastElement) {
         if (parseInt(precastElement.Camion) === camion) {
@@ -122703,66 +122771,46 @@ function generaBotonesNumCamion(camionesUnicos) {
       const isActive = btn.classList.contains("active");
       if (isActive) {
           viewer.IFC.selector.unpickIfcItems();
-          activeExpressIDs = activeExpressIDs.filter(
-            id => !expressIDs.includes(id)
-          );
 
-          hideAllItems(viewer, expressIDs);
+          activeExpressIDs = activeExpressIDs.filter(id => !expressIDs.includes(id));
+
+          
           btn.classList.remove("active");
           btn.style.justifyContent = "center";
           btn.style.color = "";
           botonesActivos--;
           removeLabels(expressIDs);
+          hideAllItems(viewer, expressIDs);
       } else {
           activeExpressIDs = activeExpressIDs.concat(expressIDs);
 
           viewer.IFC.selector.unpickIfcItems();
-          hideAllItems(viewer, allIDs);
-          showAllItems(viewer, activeExpressIDs);
+          
           btn.classList.add("active");
           btn.style.color = "red";
           botonesActivos++;
           generateLabels(activeExpressIDs);
+          hideAllItems(viewer, allIDs);
+          showAllItems(viewer, activeExpressIDs);
       }
+
+      
 
       if (botonesActivos === 0) {
         showAllItems(viewer, allIDs);
-        enableCheckboxes();
+        const containerFiltros= document.getElementById("checkbox-container");
+        containerFiltros.style.visibility="visible";
+        
+        // enableCheckboxes();
+        // enableBtnCheckboxes();
       } else {
-        disableCheckboxes();
-        disableBtnCheckboxes();
+        const containerFiltros= document.getElementById("checkbox-container");
+        containerFiltros.style.visibility="hidden";
+        // disableCheckboxes();
+        // disableBtnCheckboxes();
       }
     });
   });
-
-  function disableCheckboxes() {
-    for (let i = 0; i < checkboxGroup.length; i++) {
-      const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
-      
-      for (let j = 0; j < checkboxes.length; j++) {
-        checkboxes[j].disabled = true;
-      }
-    }
-  }
-  function disableBtnCheckboxes() {
-      const checkboxContainer = document.getElementById('checkbox-container');
-      const buttons = checkboxContainer.querySelectorAll('.checkbox-button-container button');
-
-      buttons.forEach((button) => {
-          button.disabled = true;
-      });
-  }
-  function enableCheckboxes() {
-    for (let i = 0; i < checkboxGroup.length; i++) {
-      const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
-      
-      for (let j = 0; j < checkboxes.length; j++) {
-        checkboxes[j].disabled = false;
-      }
-    }
-    
-  }
-  
 }
 
 
