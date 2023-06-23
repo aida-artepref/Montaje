@@ -122370,6 +122370,7 @@ container.onclick = async () => {
 
   muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso);
 };
+
 function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso) {
   const container = document.getElementById('propiedades-container');
   container.style.visibility = "visible";
@@ -122746,12 +122747,12 @@ async function generateLabels(expressIDs) {
   
 }
 
-
+let botonesActivos; 
 function generaBotonesNumCamion(camionesUnicos) {
   viewer.IFC.selector.unpickIfcItems();
 
   const btnNumCamiones = document.getElementById("divNumCamiones");
-  let botonesActivos = 0; // contador de botones activos
+  botonesActivos = 0; // contador de botones activos
 
   btnNumCamiones.innerHTML = ""; // limpia el div antes de generar los botones
   agregarBotonCero();
@@ -122808,6 +122809,15 @@ function generaBotonesNumCamion(camionesUnicos) {
           removeLabels(expressIDs);
           hideAllItems(viewer, expressIDs);
       } else {
+          const btnCheckPulsado = document.querySelectorAll('.btnCheck.pulsado');
+                btnCheckPulsado.forEach(function(btn) {
+                btn.classList.remove('pulsado');
+          });
+          const piezaLabels = document.querySelectorAll('.pieza-label');
+                piezaLabels.forEach(function(label) {
+                    label.style.visibility = 'hidden';
+                });
+          
           activeExpressIDs = activeExpressIDs.concat(expressIDs);
 
           viewer.IFC.selector.unpickIfcItems();
@@ -122823,10 +122833,30 @@ function generaBotonesNumCamion(camionesUnicos) {
       
 
       if (botonesActivos === 0) {
-        showAllItems(viewer, allIDs);
+        // showAllItems(viewer, allIDs);
+        ocultarLabels();
         const containerFiltros= document.getElementById("checkbox-container");
         containerFiltros.style.visibility="visible";
-        
+        const checkedArtPiezas = []; 
+                checkboxes.forEach(function (checkbox) {
+                    if (checkbox.checked) {
+                        checkedArtPiezas.push(checkbox.getAttribute('data-art-pieza'));
+                    }
+                });
+                const matchingIds = []; // Almacenar los IDs de los elementos que coinciden con los checkboxes seleccionados
+                
+                precastElements.forEach(function (element) {
+                    if (element.ART_Pieza === 0 || element.ART_Pieza === "0" || element.ART_Pieza === "" || element.ART_Pieza === undefined) {
+                        return;
+                    }
+                    if (checkedArtPiezas.includes(element.ART_Pieza.charAt(0).toUpperCase())) {
+                        // if (!element.hasOwnProperty('Camion') || element.Camion === "") {
+                            matchingIds.push(element.expressID);
+                        // }
+                    }
+                });
+                hideAllItems(viewer, idsTotal );
+                showAllItems(viewer, matchingIds);
         // enableCheckboxes();
         // enableBtnCheckboxes();
       } else {
@@ -122889,7 +122919,7 @@ function agregarBotonCero() {
   btnCero.appendChild(iconoPlay);
 
   btnCero.addEventListener("click", function() {
-    
+
       const isActive = btnCero.classList.contains("active");
       if (isActive) {
           hideAllItems(viewer, idsTotal);
@@ -122898,6 +122928,7 @@ function agregarBotonCero() {
           btnCero.style.justifyContent = "center";
           btnCero.style.color = "";
       } else {
+          ocultarLabels();
           hideAllItems(viewer, idsTotal);
           const botones = document.querySelectorAll('#divNumCamiones button');
 
@@ -122912,12 +122943,15 @@ function agregarBotonCero() {
           btnCero.style.justifyContent = "center";
           
           showElementsByCamion(viewer, precastElements);
+
       }
   });
 }
 
 function showElementsByCamion(viewer, precastElements) {
   // Crear el div y el label
+  activeExpressIDs = [];
+  botonesActivos=0;
   const label = document.createElement("label");
   const div = document.createElement("div");
   div.setAttribute("id", "divNumCamion");
@@ -122952,10 +122986,23 @@ function showElementsByCamion(viewer, precastElements) {
       }, delay);
     delay += 350; // Esperar un segundo antes de mostrar el siguiente grupo
   });
+
    //ocultar la etiqueta después de mostrar todos los elementos
   setTimeout(() => {
     if (btnCero.classList.contains("active")) {
       btnCero.classList.remove("active");
+      
+
+      let checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+      checkboxes.forEach(function(checkbox) {
+          checkbox.checked = true;
+      });
+
+      let elementos = document.querySelectorAll('.btnCheck.pulsado');
+
+      elementos.forEach(function(elemento) {
+        elemento.classList.remove('pulsado');
+      });
     }
     div.style.visibility="hidden";
 
