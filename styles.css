@@ -1,33 +1,450 @@
-* {
-    margin: 0;
+/*SIEMPRE EN APPWEB*/
+*{
     padding: 0;
+    margin: 0;
     box-sizing: border-box;
-    font-family: "Roboto", sans-serif;
+    overflow: hidden;  /*no aparezce barra scroll*/
+    font-family: 'Roboto', sans-serif;
+    --dark-grey:#888888;
+    --border:solid 1px var(--dark-grey);
 
-    --light-gray: rgb(139, 139, 139);
-    --dark-gray: rgb(95, 95, 95);
-    --light-yellow: #ffcc32;
-    --light-orange:#ffa50f;
-    --orange:#f58410;
-    --dark-orange:rgb(184, 111, 33);
-    
-    --translucent-white: rgba(255, 255, 255, 0.7);
-
-    --normal-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-    --blur-filter: blur(8px);
-
-    --main-orange-color: #f08923;
-    --heavy-grey: #7a7a7a;
-    --light-grey: #cdcdcd;
-    --background-white: #ffffff;
-    --transparent-white: rgba(255, 255, 255, 0.7);
-    --text-color-white: #ffffff;
-    --text-color-grey: #54595F;
-    --text-color-black: black;
 }
 
-html{
+.app-container{
+  display: flex;
+  flex-direction: row;
+  position: absolute;    
+  width: 100vw;
   height: 100vh;
+  top: 0;
+}
+
+.slidebar{
+  display: none;
+    /* width: 0 rem;
+    height: 100%;
+    background-color: whitepink;
+    border:var(--border); */
+}
+
+.button-container{
+    display: flex;
+    height: 3rem;
+    border-bottom: var(--border);
+}
+
+.button{
+    display:flex;
+    align-items: center;
+    padding: 0 1rem;
+    margin: 0.5rem;
+    border: var(--border);
+    border-radius: 0.5rem;
+    -webkit-user-select: none;
+    cursor: pointer;
+}
+
+.button-recarga{
+  width: 3rem;
+  text-align: center;
+  display:flex;
+  align-items: center;
+  padding: 0 1rem;
+  margin: 0.5rem;
+  border: var(--border);
+  border-radius: 0.5rem;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  text-align: center;
+  cursor: pointer;
+}
+
+.button-recarga:hover{
+  background-color: #dadada;
+    border-style: solid;
+    border-width: thin;
+}
+.button:hover{
+    background-color: #dadada;
+    border-style: solid;
+    border-width: thin;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: right;
+  border-bottom: var(--border);
+  height: 3rem;
+}
+
+.toolbar a {
+  margin: 0.5rem;
+  
+  
+}
+
+.simple-card-container.bottom {
+  display: flex;
+}
+
+.toolbar, .button-container {
+  flex: 1;
+}
+
+.disable{
+  pointer-events:none;
+  background-color: #f0f0f0;
+}
+
+.three-menu{
+    height: calc(45%);
+    border-bottom:var(--border);
+    overflow-y: auto;
+}
+
+#main-container {
+  position: relative;
+  height: 70vh;
+  position:fixed;
+  bottom:280px;
+  right:5px;
+  width:auto;
+  height:auto;
+  background-color:rgb(255, 255, 255);  
+  padding: 5px;
+  font-size: 12px;
+  border: 1px solid gray;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
+}
+
+.property-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 2px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  height: calc(50%);
+}
+
+.property-root{
+    display: flex;
+    text-align: right;
+    padding: 3px;
+    border-bottom: var(--border);
+}
+
+.property-name{
+    width: 50%;
+    text-align: left;
+    font-weight: bold;
+}
+
+.property-value{
+    width: 50%;
+    text-align: right;
+}
+#elementosOcultosDiv{
+  position:fixed;
+  top:10px;
+  left:10px;
+  width:auto;
+  height:auto;
+  background-color:lightblue;  
+  padding: 10px;
+}
+
+#viewer-container{
+  width: 100%;
+  height: 80%;
+  background-color: whitepink;
+  border: var(--border);
+}
+
+#file-input{
+    visibility: collapse;
+}
+#importCSV{
+  visibility: collapse;
+}
+
+/* Remove default bullets */
+ul, #myUL {
+    list-style-type: none;
+  }
+  
+  /* Remove margins and padding from the parent ul */
+  #myUL {
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Style the caret/arrow */
+  .caret {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+    -webkit-user-select: none;
+  }
+  
+  /* Create the caret/arrow with a unicode, and style it */
+  .caret::before {
+    content: "\25B6";
+    color: black;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  
+  /* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+  .caret-down::before {
+    transform: rotate(90deg);
+  }
+  
+  /* Hide the nested list */
+  .nested {
+    display: none;
+    margin-left: 1rem
+  }
+  
+
+.item-list-elementos-cargados{
+  display: inline-block;
+}
+
+  .divCargas {
+    position: fixed;
+    top:48px;
+    left:0px;
+    background-color: rgba(255, 255, 255);
+    border: 1px solid #874c8f;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 1px;
+    width: auto;
+    height: auto;
+    text-align: center;
+    z-index: 9999;
+    /* overflow: visible; */
+  }
+  
+  .titleCargas {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1px;
+  }
+
+  .titleCargas span {
+    color: #e20a17;
+    font-weight: bold;
+    
+}
+  
+  .titleCargas button {
+    
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+    background-color: #f7f7f7;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  #reduceDivBtn, #expandDivBtn {
+    position: absolute;
+    right: -25px;
+    top: 5px;
+    width: 50px !important;
+    height: 10px;
+    border-radius: 20px;
+    border: 1px solid rgb(63, 63, 63);
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.5);
+    background-color: #bdbcbc;
+    line-height: 30px;
+    text-align: center;
+}
+
+#reduceDivBtn::before {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+
+
+#expandDivBtn::before {
+  content: "\f061";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+}
+
+
+  
+  #reduceDivBtn:hover,
+  #expandDivBtn:hover {
+    cursor: pointer;
+    background-color: #505050;
+    color:white;
+  }
+  
+
+  #nuevoCamion{
+    float: left;
+    margin-left: 20px;
+    text-align: center;
+    width: 30px;
+    padding: 10px;
+    padding-left: 10px;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+    color:black;
+    background-color: #f7f7f7;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  
+  .titleCargas button:active {
+    background-color: #e20a17;
+    color: white;
+    transition: all 0.3s ease;
+  } 
+  
+  .item-list-elementos-cargados {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .item-list-elementos-cargados li {
+    margin-bottom: 5px;
+    padding: 5px;
+    border: 1px solid hsl(0, 0%, 83%);
+    border-radius: 5px;
+    background-color: #f7f7f7;
+    color: #333;
+  }
+  .divCheck {
+    position: fixed;
+    top: 18%;
+    right:10px;
+    background-color:rgba(255, 255, 255, 0.267);
+    border: 1px solid rgb(126, 126, 126);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 5px;
+    width: auto;
+    height: auto;  
+    background-color: white;
+    border-radius: 10px;
+    z-index: 999;
+  }
+
+  .resultado-no-encontrado {
+    margin-top: 8px;
+    color: red;
+}
+
+  #inputARTP {
+    top: 5%;
+    right: 230px;
+    height: auto;
+    overflow: hidden;
+    transition: height 0.3s ease;
+    display: none;
+  }
+  
+
+  #infoBusquedas {
+    height: auto;
+    max-height: 200px; /* Ajusta esta altura según tus necesidades */
+    overflow-y: auto;
+  }
+  
+  #infoContainer {
+    height: auto;
+    display: none;
+  }
+  
+  #infoContainer.activeInfo {
+    display: block;
+  }
+  
+  .pulsado {
+    background-color:rgb(99, 99, 99) !important;
+    color:white !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.2);
+    
+  }
+  .pulsadoFiltro {
+    background-color:rgb(185, 115, 115) !important;
+    color:white !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.2);
+  
+}
+
+
+  #file-name {
+    padding-top: 15px;
+    text-align: center;
+    display: block;
+    color: #e20a17
+  }
+
+
+  
+  .header-logo {
+    height: 40px;
+    margin-top: 5px;
+    float: right;
+  }
+
+  table.table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  table.table td,
+  table.table th {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  table.table th {
+    background-color: #ddd;
+  }
+
+  ul {
+    max-height: 595px;
+    overflow-y: auto;
+    font-size: 0.95rem;
+  }
+
+  .button-container-plans {
+    z-index: 2;
+    position: relative;
+    left: .5rem;
+    top: .5rem;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    background-color: chartreuse;
 }
 
 #propiedades-container {
@@ -35,385 +452,57 @@ html{
   position: fixed;
   display: flex;
   flex-direction: column;
-  bottom: 100px; 
-  right: 50px;
+  top: 570px; 
+  right: 5px;
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.7);
   margin: 5px;
   border: 1px solid rgba(0, 0, 0, 0.5); /* Añade un borde de 1 píxel y color suave */
   border-radius: 20px;
-}
-header {
-    color: var(--light-gray);
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid gray;
-    margin: auto;
-    text-align: center;
+  background-color: #e2de73;
 }
 
-body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
+#btnCreaPrecast{
+  background-color: #7939393f;
 }
 
-label{
-  z-index:999;
-}
-
-/* From uiverse.io */
-.button {
-    padding: 0.7rem;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2.5px;
-    font-weight: 500;
-    color: #000;
-    background: var(--translucent-white);
-    border: none;
-    border-radius: 45px;
-    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease 0s;
-    cursor: pointer;
-    outline: none;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.2);
-}
-  
-.button:hover {
-    background-color: var(--light-blue);
-    box-shadow: 0px 15px 20px rgba(46, 104, 229, 0.4);
-    background-color: var(--light-orange);
-    color: #fff;
-    fill: #fff;
-    transform: translateY(-7px);
-}
-
-.buttonCheck {
-  padding: 0.7rem;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 2.5px;
-  font-weight: 500;
-  color: #000;
-  background: var(--translucent-white);
-  border: none;
-  border-radius: 45px;
-  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease 0s;
+.btnCheck{
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
+  padding: 5px 5px;
+  border: solid 1px ;
   cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.2);
-}
-.btnCheck {
-  border: 1px solid rgb(0, 0, 0);
-  padding: 5px;
-  height: 2rem;
-  width: 2rem;
-  border-radius: 45%;
-  margin: 2px;
-  color:var(--dark-orange);
-
-  border-color: var(--dark-orange);
-}
-
-.pulsado {
-  background-color: var(--light-orange);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 0, 0, 0.2);
-  color: #fff;
-}
-
-/* .buttonCheck.activeBoton {
-  background: red ;
-} */
-.buttonCheck:hover {
-  box-shadow: 0px 15px 20px rgba(46, 104, 229, 0.4);
-  background-color: var(--light-orange);
-  color: #fff;
-  fill: #fff;
-}
-
-.button:active {
-    transform: translateY(-1px);
-}
-
-/*contenedor general*/
-.app {
-    display: flex;
-    height: 100vh;
-    width: calc(100% - 3.2rem);
-    border: 1px solid var(--heavy-grey);
-    position: relative; /* Set container position as relative */
-    overflow: hidden;
-}
-
-.barra-lateral {
-    background-color: #ffcc32;
-    width: 3.5 rem;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    border-left: 1px solid var(--heavy-grey);
-    position: absolute;
-    top: 0;
-    right: 0;
-    /* justify-content: center; */
-}
-  
-
-.toolbar {
-  padding: 5px;
-  padding-top: 50px;
-}
-
-.toolbar a.button svg {
-  vertical-align: middle;
-}
-.toolbar a.button {
-  margin-top: 5px; /* ajusta el valor según sea necesario */
-}
-
-canvas {
-  flex: 1;
-  height: 100%;
-  width: calc(100% - 4rem);
-}
-
-/* From uiverse.io */
-.button-barra-lateral {
-    padding: 0.7rem;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2.5px;
-    font-weight: 500;
-    color: #000;
-    background: var(--translucent-white);
-    border: 1px solid var(--heavy-grey);
-    border-radius: 5px;
-    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease 0s;
-    cursor: pointer;
-    outline: none;
-    display: flex;
-    align-items: center;
-    width: 40px;
-    height: 40px;
-    margin-top: 20px; 
-}
-
-
-.active{
-  padding: 0.7rem;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 2.5px;
-  font-weight: 500;
-  color: #000;
-  background: var(--orange) ;
-  border: 1px solid var(--heavy-grey);
+  /* margin: 5px; */
+  font-size: 15px;
   border-radius: 5px;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
-  transition: all 0.3s ease 0s;
+}
+button {
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
+  padding: 10px 24px;
+  border: solid 1px ;
   cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  width: 40px;
-  height: 40px;
-  margin-top: 5px; 
+  margin: 5px;
+  font-size: 15px;
 }
 
-.activo {
-  padding: 0.7rem;
-  font-size: 12px;
-  letter-spacing: 2.5px;
-  font-weight: 500;
-  color: #000 !important;
-  background: var(--orange) !important;
-  border: 1px solid var(--heavy-grey);
-  border-radius: 5px;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease 0s;
-  cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  margin-top: 5px; 
-  text-align: center !important;
-}
-.activoBtnLabelPlanta {
-  padding: 0.7rem;
-  font-size: 12px;
-  letter-spacing: 2.5px;
-  font-weight: 500;
-  color: #000 !important;
-  background: var(--orange) !important;
-  border: 1px solid var(--heavy-grey);
-  border-radius: 5px;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease 0s;
-  cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 30px;
-  margin-top: 5px; 
-  text-align: center !important;
-}
 
-.activoBtn2DPlanta {
-  padding: 0.7rem;
-  font-size: 12px;
-  letter-spacing: 2.5px;
-  font-weight: 500;
-  color: #000 !important;
-  background: var(--orange) !important;
-  border: 1px solid var(--heavy-grey);
-  border-radius: 5px;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease 0s;
-  cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 30px;
-  margin-top: 5px; 
-  text-align: center !important;
-}
 
-.button-carga-ifc {
-  padding: 0.7rem;
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 2.5px;
-  font-weight: 500;
-  color: #000;
-  background: var(--light-orange);
-  border: 1px solid var(--heavy-grey);
-  border-radius: 10px;
-  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease 0s;
-  cursor: pointer;
-  outline: none;
-  display: flex;
-  align-items: center;
-  width: 80px;
-  height: 40px;
-  margin: 5px; 
-  text-align: center;
-}
-
-#loader-button {
-  position: fixed;
-  top: 5px; /* ajusta la posición vertical */
-  left: 5px; /* ajusta la posición horizontal */
-  z-index: 999;
-}
-
-/*contenedor botones de planos*/
-#button-container {
-  position: fixed;
-  top: 100px; /* ajusta la posición vertical */
-  left: 20px; /* ajusta la posición horizontal */
-  z-index: 999;
-  width: 50px;
-  height: 50px;
-  visibility: hidden;
-}
-
-.additional-button {
-  
+.separator {
+  width: 1px;
+  height: 50px; 
+  background-color: #535353; 
   display: inline-block;
-  /* Agrega otros estilos según sea necesario */
-}
-
-#botonImportar{
-  position: fixed;
-  top: 80px; /* ajusta la posición vertical */
-  left: 20px; /* ajusta la posición horizontal */
-  z-index: 999;
-  width: 50px;
-  height: 50px;
-  border-radius: 2px !important;
-  visibility: hidden;
-}
-
-#button-container button{
-  border: 1px solid var(--light-grey);
-  background: white;
-  border-color: var(--dark-orange);
-  color:var(--dark-orange);
-  border-radius: 25px;
-  margin: 0.2rem;
-  padding: 0.5rem;
-  cursor: pointer;
-  width: 8rem;
-  transition: width 0.2s ease-in-out;
-}
-#file-input{
-  visibility: collapse;
-  visibility: hidden;
-  position: absolute;
-}
-
-#file-name {
-  position: absolute;
-  top: 10px;
-  left: 90px;
-  z-index: 999;
-  padding: 10px;
-  color:var(--dark-orange);
-  background-color:white;
-  border-color: 1px solid var(--dark-orange);
-  border-radius: 5px;
-  display :none;
-}
-
-#importCSV{
-  visibility: collapse;
-  visibility: hidden;
-  position: absolute;
-}
-
-#divNumCamiones {
-  position: fixed;
-  bottom: 0%;
-  left: 10%;
-  height: auto;
-  width: 80%; 
-  padding: 5px;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  box-sizing: border-box; /*incluye el ancho del borde y del relleno en el ancho y alto */
-  white-space: nowrap; /* Evita que los botones se muevan */
-  border: 1px solid transparent; /* Agregar borde transparente para que el div mantenga su tamaño cuando los botones cambian su apariencia */
-  overflow-x: auto;
-  z-index:9999;
+  margin-right: 8px; 
+  margin-left: 8px; 
 }
 
 .btnNumCamion {
-  padding: 10px;
-  margin:5px;;
+  padding: 5px;
   background-color: rgba(110, 109, 109, 0.5);
   color: white;
   border-radius: 5px;
-  font-size: 20px;
+  font-size: 16px;
   min-width: 40px;
   text-align: center;
   display: flex;
@@ -425,9 +514,35 @@ canvas {
   color:red !important;
 }
 
+.btnNumCamion:hover {
+  background-color: rgb(116, 116, 116);  
+  transition: background-color 0.3s ease;
+}
+.btnNumCamion i {
+  
+  font-size: 100%;
+}
+
+#divNumCamiones {
+  position: fixed;
+  bottom: 20%;
+  left: 435px;
+  height: auto;
+  width: 75%; 
+  padding: 5px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box; /*incluye el ancho del borde y del relleno en el ancho y alto */
+  white-space: nowrap; /* Evita que los botones se muevan */
+  border: 1px solid transparent; /* Agregar borde transparente para que el div mantenga su tamaño cuando los botones cambian su apariencia */
+  overflow-x: auto;
+}
+
+/*etiqueta de info del boton play*/
 #divNumCamion{
   position :absolute;
-  top : 40px;
+  top : 70px;
   left : 50%;
   transform : translate(-50%, 0);
   background-color: rgba(0, 0, 0, 0.5);
@@ -438,78 +553,362 @@ canvas {
   justify-content: flex-start;
 }
 
-.btnNumCamion:hover {
-  background-color: rgb(116, 116, 116);  
+
+
+.item-list-elemento {
+  font-size: 12px;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+#contenedor {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20%;
+  display: flex; /* para hacer que los divs hijos estén en línea */
+  justify-content: space-between; /* para separar los divs hijos */
+  align-items: center; /* para alinear verticalmente los divs hijos */
+  
+}
+
+#datosCamiones {
+  width: 50%;
+  height: 100%;
+  overflow-x: auto;
+  border-right: 1px solid black; /* agregar un borde derecho de 1px */
+  
+}
+
+#posicionCamion {
+  width: 50%; 
+  height: 200px;
+overflow: auto;
+display: flex;
+}
+#posicionCamion table {
+  height: 75% ;
+}
+
+table {
+  border-collapse: collapse;
+  border: 1px solid black;
+}
+
+th, td {
+  border: 1px solid black;
+  padding: 5px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1px;
+}
+
+
+.btn-notacion {
+  font-size: 14px;
+  padding: 5px ;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  height: 25px;
+  background-color: #e6e6e6;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  color: #333;
+  cursor: pointer;
+  font-size: 16px;
+  text-align: center;
   transition: background-color 0.3s ease;
 }
-.btnNumCamion i {
-  
-  font-size: 100%;
+
+input[type="checkbox"] {
+  height: 10px;
 }
-/* .button-barra-lateral:hover {
-    background-color: var(--light-blue) !important;
-    box-shadow: 0px 5px 5px rgba(46, 104, 229, 0.4);
-    color: #fff;
-    fill: #fff;
-    transform: translateY(-4px);
-}  */
+
+.btn-notacion:hover {
+  background-color: #d9d9d9;
+}
+
+input[type="checkbox"] {
+  margin-right: 10px;
+}
+.btn-notacion img {
+  height: 20px;
+  margin-right: 5px;
+}
 
 
-  /* .button-barra-lateral:active {
-    transform: translateY(-1px);
-  } */
+.divNumPrecast{
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  background-color: white;
+  padding: 10px;
+  border: 1px solid black;
+  z-index: 9999;
+}
+
+.alert-eliminacion {
+  background-color: #f44336;
+  color: white;
+  padding: 12px;
+}
+
 
 /* 
-  @media only screen and (min-width: 768px) {
-    #a-recarga:before {
-      content: "Recarga";
-      position: absolute;
-      top: 100%;
-      right: -50px;
-      transform: translateX(-50%);
-      background-color: #333;
-      color: #fff;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
-    }
-    #a-recarga:hover:before {
-      opacity: 1;
-    }
-  }
-   */
+.seleccionado {
   
+  color: rgb(0, 0, 0) !important;
+}  */
+.boton-carga {
+  background-color: white;
+  color: black;
+  border: 1px solid #000 !important;
+  padding: 10px 20px;
+  font-size: 18px;
+}
 
-#checkbox-container {
-    visibility: hidden;
-    position:fixed;
-    display: flex;
-  flex-direction: column;
-    bottom:50px;
-    padding: 1rem;
-    background-color: rgba(255, 255, 255, 0.7);
-    margin: 5px;
-    border-radius: 20px;
-  }
+.boton-carga.seleccionado {
+  background-color: var(--boton-activo-fondo);
+  color: white; 
+  border-radius: 80px;
+  border: 1px solid rgb(255, 0, 0) !important;
   
+}
 
-  .checkbox-container > * {
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
+#nuevoCamionEstructura {
+  background-color: #6d4c90;
+}
 
-  .checkbox-group {
-    display: flex;
-    align-items: center;
-  }
-  .checkbox-button-container {
-    display: flex;
-    align-items: center;
-    /* justify-content: space-between; */
-  }
+#nuevoCamionAlveolar {
+  background-color: #4c7a90;
+}
+
+#nuevoCamionCerramiento {
+  background-color: #90834c;
+}
+
+#nuevoCamionTubular {
+  background-color: #9e9e9e;
+}
+#menosE, #menosA, #menosC, #menosTu {
+  height: 5px;
+  margin-top: -20px;
+  background-color: transparent;
+  box-shadow: none;
   
+}
+
+#tipoCarga {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* estilos de la tabla */
+.table {
+  border: 1px solid black;
+  border-collapse: collapse;
+  width: 100%;
+  text-align: center;
+  overflow-y: auto;
+}
+
+/* estilos de la cabecera */
+.table-header {
+  border-bottom: 2px solid black;
+  padding: 12px 15px;
+  height: 30px;
+  line-height: 30px;
+  background: #f2f2f2;
+  overflow-y: auto;
+}
+
+/* estilos de las filas de la tabla */
+.table-row {
+  border-bottom: 1px solid black;
+}
+
+/* estilos de las celdas de la tabla */
+.table-cell {
+  padding: 10px;
+  border-bottom: 1px solid black;
+}
+
+/* estilos del contenedor de la tabla */
+.table-container {
+  margin: 10px;
+  display: inline-block;
+  max-width: 50%;
+  height: calc(100% - 15px);
+  overflow-y: auto;
+  vertical-align: top;
+}
+
+
+.contenedor-tabla {
+  margin: 10px;
+  display: inline-block;
+  max-width: 50%;
+  overflow-y: auto;
+  height: calc(100% - 15px);
+  
+}
+
+.tabla-estilo {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.tabla-estilo th,
+.tabla-estilo td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  text-align: center;
+}
+
+.tabla-estilo th {
+  font-weight: bold;
+  background-color: #f2f2f2;
+  white-space: pre-line; 
+  line-height: 1.5; /* Espaciado entre líneas */
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;;
+  text-align: center;
+}
+
+
+.tabla-estilo tbody tr:hover {
+  background-color: #f5f5f5;
+}
+.tabla {
+  border: 1px solid black;
+  border-collapse: collapse;
+  width: 100%;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.tabla thead th {
+  border-bottom: 2px solid black;
+  padding: 12px 15px;
+  height: 30px;
+  line-height: 30px;
+  overflow-y: auto;
+  /* background: #f2f2f2; */
+}
+
+.tabla tbody tr {
+  border-bottom: 1px solid black;
+}
+
+.tabla tbody td {
+  padding: 10px;
+  border-bottom: 1px solid black;
+}
+.borde-grueso {
+  border-width: 4px !important; 
+
+}
+td.cajon {
+  position: relative;
+  text-align: center;
+  vertical-align: middle;
+  width: 50px;
+  height: 50px;
+  border: 1px solid black;
+}
+
+td.cajon::before {
+  content: attr(data-id);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+#pesoCamion{
+  display:block;
+  color:rgb(0, 0, 0);
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-size: 15px;
+}
+#pesoCamionLabel{
+  display:block;
+  color:black;
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-size: 12px;
+
+}
+#numT {
+  font-size: 20px;
+  background-color: rgb(255, 255, 255);
+  padding: 10px; 
+  margin-right: 30px;
+  border: 1px solid #333;
+  border-radius: 0px;
+  /* box-shadow:0px 2px 5px rgba(0,0,0,0.5); */
+  color: black;
+  display:block;
+  margin-bottom: 5px;
+  color:red;
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-size: 30px;;
+}
+
+#numCamionContainer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  grid-column: 1 / -1 ; 
+}
+
+
+#numCamion {
+  color: red;
+  font-size: 30px;
+  font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+select.seleccionado {
+    background-color: rgb(189, 155, 194);
+}
+  
+#barraSuperior .button {
+  box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.5);
+}
+.icono-ojo {
+  width: 30px;
+  height: 30px;
+  background-repeat: no-repeat;
+  background-size: contain;
+  margin: auto;
+  /* border: 1px solid rgb(0, 0, 0) !important; */
+  text-align: center;
+  padding: 0 !important;
+  cursor: pointer;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9) ;
+}
+
+.icono-ojo i {
+  display: inline-block;
+}
+
+.icono-ojo-silueta::before {
+  content: "\f06e"; /* Código Unicode del icono de ojo sin tachar */
+  font-family: "Font Awesome 5 Free"; /* Nombre de la fuente que contiene el icono */
+  font-weight: 900; /* Peso de la fuente */
+}
+
+
+
 
 .pieza-label{
   background-color: rgba(255, 255, 255, 0.7);
