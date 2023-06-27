@@ -293,13 +293,27 @@ async function getPlantas(model) {
       }
     }
     
+   
+    let plantaActivo = false;
+    
     btn2DPlantas.onclick = () => {
       if (btn2DPlantas.classList.contains('activoBtn2DPlanta')) {
         btn2DPlantas.classList.remove('activoBtn2DPlanta');
+        plantaActivo = false;
+        generatePlanta2D(plantaActivo);
       } else {
         btn2DPlantas.classList.add('activoBtn2DPlanta');
-        
-        generatePlanta2D(model);
+        plantaActivo = true;
+        if (!posicionInicial) {
+          // Almacenar la posición actual de la cámara antes de cambiarla
+          const camera = viewer.context.getCamera();
+          posicionInicial = {
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z
+          };
+        }
+        generatePlanta2D(plantaActivo);
       }
     };
     
@@ -344,21 +358,34 @@ const piezaLabels = document.querySelectorAll('.pieza-label');
       removeLabels(expressIDsOcultar);
 }
 
-function generatePlanta2D(model) {
+let posicionInicial = null;
+function generatePlanta2D(plantaActivo) {
   
-
   //const screenShot = viewer.context.renderer.newScreenshot(camera);
   // CREA UN IMAGEN DE LA CAMARA EN ESA POSICION
-  const camera = viewer.context.getCamera();
-  console.log(camera.position);
 
-  viewer.context.ifcCamera.cameraControls.moveTo(0,50,0, false);
-  viewer.context.ifcCamera.cameraControls.setTarget(0, 0, 0);
-  viewer.context.ifcCamera.orthographicCamera.updateProjectionMatrix();
-  viewer.context.ifcCamera.cameraControls.update(); // Actualizar la cámara en el visor
-  console.log(camera.position);
-
+  if (plantaActivo) {
+    console.log("Botón activo");
+    viewer.context.ifcCamera.cameraControls.setLookAt(0, 50, 0, 0, 0, 0);
+  } else {console.log("Desactivo");
+    if (posicionInicial) {
+      viewer.context.ifcCamera.cameraControls.setLookAt(posicionInicial.x, posicionInicial.y, posicionInicial.z, 0, 0, 0);
+      posicionInicial=null;
+    }
+  }
 }
+
+// async moveCameraTo2DPlanPosition(animate) {
+//   if (this.floorPlanViewCached)
+//       await this.context.ifcCamera.cameraControls.reset(animate);
+//   else
+//       await this.context.ifcCamera.cameraControls.setLookAt(0, 100, 0, 0, 0, 0, animate);
+// }
+// store3dCameraPosition() {
+//   this.context.getCamera().getWorldPosition(this.previousCamera);
+//   this.context.ifcCamera.cameraControls.getTarget(this.previousTarget);
+//   this.previousProjection = this.context.ifcCamera.projection;
+// }
 
 async function createPrecastElementsArray(modelID){
   const ifcProject = await viewer.IFC.getSpatialStructure (modelID);
