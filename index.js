@@ -1,4 +1,4 @@
-import { Color, Loader, Vector3, BufferAttribute, BufferGeometry, MeshBasicMaterial, LineBasicMaterial, MeshStandardMaterial, Scene, LineSegments , EdgesGeometry, Mesh, Group, MeshPhongMaterial, WebGLRenderer, OrthographicCamera}  from 'three';
+import { Color, Loader, Vector3, BufferAttribute, BufferGeometry, MultiMaterial, MeshLambertMaterial, MeshBasicMaterial, LineBasicMaterial, MeshStandardMaterial, Scene, LineSegments , EdgesGeometry, Mesh, Group, MeshPhongMaterial, WebGLRenderer, OrthographicCamera}  from 'three';
 import{ IfcViewerAPI } from 'web-ifc-viewer';
 import { IfcElementQuantity } from 'web-ifc';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
@@ -298,12 +298,8 @@ async function getPlantas(model) {
         btn2DPlantas.classList.remove('activoBtn2DPlanta');
       } else {
         btn2DPlantas.classList.add('activoBtn2DPlanta');
-        //cambio de vista 
-        // const camera = new IfcCamera();
-
-        // // Llamar a la función toggleProjection()
-        // camera.toggleProjection();
-          generatePlanta2D(model);
+        
+        generatePlanta2D(model);
       }
     };
     
@@ -350,44 +346,18 @@ const piezaLabels = document.querySelectorAll('.pieza-label');
 
 function generatePlanta2D(model) {
   
-  // model.traverse((child) => {
-  //   if (child.isMesh) {
-  //     const lineMaterial = new LineBasicMaterial({ color: 'black' });
-
-  //     const geometry = new BufferGeometry();
-  //     geometry.setAttribute('position', new BufferAttribute(child.geometry.attributes.position.array, 3));
-
-  //     const lines = new LineSegments(geometry, lineMaterial);
-  //     scene.add(lines);
-  //   }
-  // });
-
-  // const camera=viewer.context.camera;
-  // console.log("camara: "+camera);
-
-
 
   //const screenShot = viewer.context.renderer.newScreenshot(camera);
   // CREA UN IMAGEN DE LA CAMARA EN ESA POSICION
   const camera = viewer.context.getCamera();
   console.log(camera.position);
 
-  console.log("camara: "+camera);
-  
-  camera.position.set(0, 10, 0);
-  camera.lookAt(new Vector3(0, 0, 0));
-  
-  // viewer.cameraControls.setLookAt(0, 10, 0, 0, 0, 0, true);
+  viewer.context.ifcCamera.cameraControls.moveTo(0,50,0, false);
+  viewer.context.ifcCamera.cameraControls.setTarget(0, 0, 0);
+  viewer.context.ifcCamera.orthographicCamera.updateProjectionMatrix();
+  viewer.context.ifcCamera.cameraControls.update(); // Actualizar la cámara en el visor
+  console.log(camera.position);
 
-
-  // const plantaRenderer = new WebGLRenderer({ antialias: true });
-  // plantaRenderer.setSize(window.innerWidth, window.innerHeight);
-  // document.body.appendChild(plantaRenderer.domElement);
-
-
-  // plantaRenderer.render( camera);
-
- 
 }
 
 async function createPrecastElementsArray(modelID){
@@ -517,22 +487,128 @@ function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso) {
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 const propButton = document.getElementById('btn-lateral-propiedades');
 let propActive= false;
+const divInputText= document.getElementById("inputARTP");
+const inputText = document.querySelector("#inputARTP input[type='text']");
+const checkBox = document.getElementById('checkLabels'); 
+const infoBusquedas = document.getElementById("infoBusquedas");
 propButton.onclick= () => {
   // viewer.plans.goTo(model.modelID, plan);
   if(propActive){
     propActive=!propActive;
     propButton.classList.remove('active');
     const propiedadesContainer = document.getElementById('propiedades-container');
-  propiedadesContainer.innerHTML = '';
-  viewer.IFC.selector.unpickIfcItems();
+    propiedadesContainer.innerHTML = '';
+    viewer.IFC.selector.unpickIfcItems();
+    divInputText.style.display = "none";
+    inputText.value="";
+    hideAllItems(viewer, idsTotal);
+    showAllItems(viewer, allIDs);
+    // removeLabels(expressIDsInput);
+    ocultarLabels();
+    expressIDsInput=[];
+        numBusquedas=0;
+        infoBusquedas.querySelector("p").textContent = "";
+        if (listaElementosEncontrados) {
+            infoBusquedas.removeChild(listaElementosEncontrados);
+            listaElementosEncontrados = null;
+        }
+        if (modelCopy) {
+            scene.remove(modelCopy); 
+            modelCopy = null;
+        }
+        return;
   }else {
     propActive=!propActive;
     propButton.classList.add('active');
-    
+    divInputText.style.display = "block";
+    inputText.focus();
   }
 
 }
 
+let numBusquedas = 0;
+let expressIDsInput;
+let modelCopy = null; 
+let listaElementosEncontrados = null;
+
+inputText.addEventListener('change', function() {
+  infoBusquedas.querySelector("p").textContent = "";
+  // removeLabels(expressIDsInput);
+  if (propActive) {
+      const elementoBuscado = inputText.value.trim().toUpperCase();
+      numBusquedas++;
+      if (elementoBuscado) {
+          const elementosEncontrados = [];
+          for (let i = 0; i < precastElements.length; i++) {
+              if (precastElements[i].ART_Pieza === elementoBuscado) {
+                  elementosEncontrados.push(precastElements[i]);
+              }
+          }
+          expressIDsInput = elementosEncontrados.map(elemento => elemento.expressID);
+          if (elementosEncontrados.length > 0) {
+              const nuevaListaElementosEncontrados = document.createElement("ul");
+              nuevaListaElementosEncontrados.classList.add("elementos-encontrados");
+              elementosEncontrados.sort((a, b) => a.Camion - b.Camion);
+
+              elementosEncontrados.forEach((elemento) => {
+                  const listItem = document.createElement("li");
+                  const nombreElemento = elemento.ART_Pieza;
+                  const camionPertenece = elemento.Camion ? elemento.Camion : "-----";
+  
+                  listItem.textContent = `Elemento: ${nombreElemento}, Camión: ${camionPertenece}`;
+                  nuevaListaElementosEncontrados.appendChild(listItem);
+                  
+              });
+              modelCopyCompletoFunction();
+              if (listaElementosEncontrados) {
+                  infoBusquedas.replaceChild(nuevaListaElementosEncontrados, listaElementosEncontrados);
+              } else {
+                  infoBusquedas.appendChild(nuevaListaElementosEncontrados);
+              }
+
+              listaElementosEncontrados = nuevaListaElementosEncontrados;
+
+              hideAllItems(viewer, idsTotal);
+              // if (modelCopy) {
+              //     scene.remove(modelCopy); 
+              // }
+              
+              
+              showAllItems(viewer, expressIDsInput);
+          } else {
+              infoBusquedas.querySelector("p").textContent = "No existe el elemento: " + elementoBuscado;
+          }
+          if (checkBox.checked) {
+              generateLabels(expressIDsInput);
+          } else {
+              removeLabels(expressIDsInput);
+          }
+      } else {
+          // propButton.style.background= '#fff0c2';
+          // propButton.addClass.remove('active');
+          hideAllItems(viewer, idsTotal);
+          showAllItems(viewer, allIDs);
+          removeLabels(expressIDsInput);
+          divInputText.style.display = "none";
+      }
+  }
+});
+
+function modelCopyCompletoFunction(){
+  const materialSolid = new MeshLambertMaterial({
+            
+      transparent: true,
+      opacity: 0.3,
+      color: 0x54a2c4,
+  });
+
+    const materialLine = new LineBasicMaterial({ color: 0x000000 });
+
+    const multiMaterial = new MultiMaterial([materialSolid, materialLine]);
+
+    modelCopy = new Mesh(model.geometry, multiMaterial);
+    scene.add(modelCopy);
+}
 // Seccion button - corte
 const cutButton = document.getElementById('btn-lateral-seccion');
 let cutActive = false;
@@ -614,6 +690,25 @@ floorplanButton.onclick = () => {
     
   };
 };
+
+// Ifc en modo fantasma
+// Muestra el ifc COmpleto
+const ifcCompletoButton = document.getElementById('btn-ifc-completo');
+let ifcCompletoActive = false;
+ifcCompletoButton.onclick=()=>{
+  ifcCompletoActive = !ifcCompletoActive;
+    if(ifcCompletoActive){
+      
+      ifcCompletoButton.classList.remove('active');
+      scene.remove(modelCopy);
+      
+    }else{
+      // measuresActive = !measuresActive;
+      ifcCompletoButton.classList.add('active');
+      modelCopyCompletoFunction()
+    }
+}
+
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 window.onclick = async () => {

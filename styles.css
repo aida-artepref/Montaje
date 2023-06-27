@@ -154,6 +154,20 @@ label{
     position: relative; /* Set container position as relative */
     overflow: hidden;
 }
+#inputARTP {
+  position: fixed;
+  top: 5%;
+  right: 80px;
+  height: auto;
+  overflow: hidden;
+  transition: height 0.3s ease;
+  display: none;
+  z-index: 9999;
+  background-color: var(--light-orange);
+  border-radius: 5px;
+  padding: 5px;
+  border: 1px solid black;
+}
 
 .barra-lateral {
     background-color: #ffcc32;
