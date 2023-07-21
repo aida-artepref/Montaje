@@ -21,6 +21,8 @@
   "homepage": "https://github.com/aida-artepref/Prueba-Arte#readme",
   "dependencies": {
     "dxf-writer": "^1.18.4",
+    "firebase": "^10.1.0",
+    "firebase-admin": "^11.10.1",
     "three": "^0.135.0",
     "web-ifc": "^0.0.35",
     "web-ifc-viewer": "^1.0.213"

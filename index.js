@@ -1,10 +1,134 @@
-import { Color, Loader, Vector3, BufferAttribute, BufferGeometry, MultiMaterial, MeshLambertMaterial, MeshBasicMaterial, LineBasicMaterial, MeshStandardMaterial, Scene, LineSegments , EdgesGeometry, Mesh, Group, MeshPhongMaterial, WebGLRenderer, OrthographicCamera}  from 'three';
+import { Color,
+  Loader, Vector3, Vector2, BufferAttribute, SphereGeometry , BufferGeometry,
+  MultiMaterial, MeshLambertMaterial, BoxGeometry, MeshBasicMaterial, LineBasicMaterial, MeshStandardMaterial,
+  PerspectiveCamera, Raycaster,
+  Scene, LineSegments , EdgesGeometry, Mesh, Group, MeshPhongMaterial, WebGLRenderer, OrthographicCamera, BoxHelper}  from 'three';
 import{ IfcViewerAPI } from 'web-ifc-viewer';
 import { IfcElementQuantity } from 'web-ifc';
 import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { PlanManager } from 'web-ifc-viewer/dist/components/display/plans/plan-manager';
 import { IfcAPI } from "web-ifc/web-ifc-api";
 
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs,  addDoc, doc, setDoc, query, updateDoc   } from "firebase/firestore";
+
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDTlGsBq7VwlM3SXw2woBBqHsasVjXQgrc",
+    authDomain: "cargas-917bc.firebaseapp.com",
+    projectId: "cargas-917bc",
+    storageBucket: "cargas-917bc.appspot.com",
+    messagingSenderId: "996650908621",
+    appId: "1:996650908621:web:b550fd82697fc26933a284"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const botonConexion = document.getElementById('conexion')
+
+botonConexion.addEventListener("click", () => {
+  
+  console.log("¡Clic en el botón!");
+  insertaModeloFire()
+});
+
+
+async function insertaModeloFire() {
+  try {
+      collectionRef = collection(db, projectName);
+      const q = query(collectionRef);
+
+      const querySnapshot = await getDocs(q);
+      const existingDocsCount = querySnapshot.docs.length;
+
+      if (existingDocsCount > 0) {
+          console.log('La colección ya existe: ' + projectName);
+          console.log('Número de piezas existentes en: ' + projectName, existingDocsCount);
+
+          if (existingDocsCount === precastElements.length) {
+              let documentosIguales = true;
+
+              for (const doc of querySnapshot.docs) {
+                  const existingDocData = doc.data();
+                  const matchingObject = precastElements.find((objeto) => objeto.GlobalId === doc.id);
+
+                  if (!matchingObject) {
+                      console.log('Documento faltante:', doc.id);
+                      documentosIguales = false;
+                  } else {
+                      const fields = Object.keys(existingDocData);
+
+                      for (const field of fields) {
+                          if (field === 'expressID') {
+                              if (existingDocData[field] !== matchingObject[field]) {
+                                  // console.log(`Diferencia en el campo ${field} del documento ${doc.id}:`, existingDocData[field], '!==', matchingObject[field]);
+                                  documentosIguales = false;
+                                  await updateDoc(doc.ref, { ExpressID: matchingObject[field] });
+                                  matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
+                              }
+                          } else if (existingDocData[field] !== matchingObject[field]) {
+                              // console.log(`DiferenciaAAAA en el campo ${field} del documento ${doc.id}:`, existingDocData[field], '!==', matchingObject[field]);
+                              documentosIguales = false;
+                              matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
+                          }
+                      }
+                  }
+              }
+
+              if (documentosIguales) {
+                  console.log('La colección tiene los mismos documentos y campos.');
+              } else {
+                  console.log('La colección tiene diferencias en documentos o campos.');
+                  const checkboxContainer = document.getElementById('checkbox-container');
+    checkboxContainer.innerHTML = generateCheckboxes(precastElements);
+    checkboxContainer.style.visibility = "visible"; 
+    addCheckboxListeners(precastElements, viewer);
+  
+    camionesUnicos = obtenerValorCamion(precastElements);
+    generaBotonesNumCamion(camionesUnicos);
+              }
+          } else {
+              console.log('La cantidad de documentos no coincide con precastElements.length.');
+          }
+          
+      } else {
+          for (const objeto of precastElements) {
+              const docRef = doc(db, projectName, objeto.GlobalId);
+              await setDoc(docRef, objeto);
+              console.log('Documento agregado:', objeto);
+          }
+          
+      }
+  } catch (error) {
+      console.error('Error al agregar los documentos:', error);
+  }
+}
+
+
+let projectName = null;
+async function obtieneNameProject(url){
+    const response = await fetch(url);
+    const text = await response.text();
+    const lines = text.split('\n');
+
+    for (const line of lines) {
+        if (line.includes('IFCPROJECT')) {
+        const fields = line.split(',');
+        projectName = fields[2].replace(/'/g, '');
+        break;
+        }
+    }
+
+    if (projectName) {
+        console.log('Nombre del proyecto:', projectName);
+        precastCollectionRef = collection(db, projectName);
+    } else {
+        
+        console.log('No se encontró el nombre del proyecto');
+    }
+}
 
 const container = document.getElementById('app');
 const viewer = new IfcViewerAPI({container, backgroundColor: new Color("#EDE8BA")});
@@ -67,7 +191,7 @@ let precastElements=[];
 
 async function loadModel(url) {
   model = await viewer.IFC.loadIfcUrl(url);
-
+  console.log(model);
   getPlantas(model);
   //TODO: REVISAR rendimiento al cargar modelo
   //createPrecastElementsArray(model.modelID);
@@ -85,68 +209,138 @@ async function loadModel(url) {
   const btnImport = document.getElementById("botonImportar");
   btnImport.style.visibility = 'visible';
 
+  // ARISTAS
+  // const mat = new LineBasicMaterial({ color: 0x525252 });
+  // viewer.edges.createFromSubset(model.modelID, subset, mat);
+  // viewer.edges.toggle(model.modelID, true);
+  viewer.context.fitToFrame();
+  creaBoxHelper();
+  obtieneNameProject(url)
+
+  // const result = await viewer.IFC.properties.serializeAllProperties(model);
+  // const file = new File(result, 'properties');
+
+  // const link = document.createElement('a');
+  // document.body.appendChild(link);
+  // link.href = URL.createObjectURL(file);
+  // link.download = 'properties.json';
+  // link.click();
+  // link.remove();
+
+
+}
+
+
+
+
+function creaBoxHelper(){
+//   const coordinates = [];
+// const alreadySaved = new Set();
+// const position = subset.geometry.attributes.position;
+// for(let index of geometry.index.array) {
+//   if(!alreadySaved.has(index)){
+//     coordinates.add(position.getX(index));
+//     coordinates.add(position.getY(index));
+//     coordinates.add(position.getZ(index));
+//     alreadySaved.add(index);
+//   }
+// }
+// const vertices = Float32Array.from(coordinates);
+  const boxHelper = new BoxHelper(model, 0xff000);
+  scene.add(boxHelper);
+
+   const geometry = boxHelper.geometry;  // Obtén la geometría del BoxHelper
+  
+
+  let centro = geometry.boundingSphere.center;
+    
+  console.log("Propiedades del objeto 'centro':");
+  console.log("x:", centro.x);
+  console.log("y:", centro.y);
+  console.log("z:", centro.z);
+
+  if (!centro) {
+    geometry.computeBoundingSphere();
+    centro=geometry.boundingSphere.center;
+    console.log("CENTRO: "+centro);
+
+  }
+  const radius = 0.1; 
+  const segments = 32; 
+  const color = 0xff0000; 
+  
+  const geometry2 = new SphereGeometry(radius, segments, segments);
+  const material = new MeshBasicMaterial({ color: color });
+  const sphere = new Mesh(geometry2, material);
+  
+  sphere.position.set(centro.x, centro.y, centro.z);
+  
+  scene.add(sphere);
+
+}
+
+
 //  Colorear los elementos sólidos, excepto los IfcBuildingElementProxy
   // model.traverse((element) => {
   //   if (element instanceof Mesh && !(element.userData.IfcEntity === "IfcBuildingElementProxy")) {
   //     element.material = solidMaterial;
   //   }
   // });
-}
 
-// async function getPlantas(model){
+//   let modelID=-1
+//   let selectID=-1
+//   let multiSelectID=[]
+ 
+//   let materialSelect= new MeshLambertMaterial({
+//     transparent: true,
+//     opacity: 0.9,
+//     color: 0x54a2c4,
+//   });
   
-//   await viewer.plans.computeAllPlanViews(model.modelID);
 
-//     const lineMaterial = new LineBasicMaterial({ color: 'black' });
-// 	  const baseMaterial = new MeshBasicMaterial({
-//         polygonOffset: true,
-//         polygonOffsetFactor: 1, // positive value pushes polygon further away
-//         polygonOffsetUnits: 1,
-//       });
-
-// 	viewer.edges.create('example', model.modelID, lineMaterial, baseMaterial);
-
-//   const containerForPlans = document.getElementById('button-container');
-//   allPlans = viewer.plans.getAll(model.modelID);
-  
-//   for (const plan of allPlans) {
-//     const currentPlan = viewer.plans.planLists[model.modelID][plan];
-  
-//     const button = document.createElement('button');
-//     containerForPlans.appendChild(button);
-//     button.textContent = currentPlan.name;
-  
-//     button.onclick = () => {
-//       viewer.plans.goTo(model.modelID, plan);
-//       viewer.edges.toggle('example', true);
+//   let keyCtrl = false;
+//   function onKeyDown(event) {
+//     if (event.key === "Control") {
+//       keyCtrl = true;
       
-//       // Busca cualquier botón con la clase "activo" y quítala
-//       const activeButton = containerForPlans.querySelector('button.activo');
-//       if (activeButton) {
-//         activeButton.classList.remove('activo');
-//       }
-  
-//       // Agrega la clase "activo" al botón actualmente seleccionado
-//       button.classList.add('activo');
-//     };
-
-//     const btnImport = document.getElementById("botonImportar");
-//     btnImport.style.visibility = 'visible';
-
+//     }
 //   }
-  
-//     const button = document.createElement('button');
-//     containerForPlans.appendChild(button);
-//     button.textContent = 'Exit floorplans';
-//     button.onclick = () => {
-//       viewer.plans.exitPlanView();
-//       viewer.edges.toggle('example', false);
-//       const activeButton = containerForPlans.querySelector('button.activo');
-//       if (activeButton) {
-//         activeButton.classList.remove('activo');
-//       }
-//     };
+
+//   function onKeyUp(event) {
+//     if (event.key === "Control") {
+//       keyCtrl = false;
+//     }
+//   }
+
+//   document.addEventListener("keydown", onKeyDown);
+//   document.addEventListener("keyup", onKeyUp);
+
+// container.addEventListener("click",(e)=>{onClick()})
+
+// function onClickSeleccion() {
+//   const found = viewer.context.castRayIfc();
+//   if (found && keyCtrl) {
+//     modelID = found.object.modelID;
+//     selectID = found.id;
+//     multiSelectID.push(selectID);
+//     let subset = viewer.IFC.loader.ifcManager.createSubset({
+//       modelID: modelID,
+//       ids: multiSelectID,
+//       material: materialSelect,
+//       scene: scene,
+//       removePrevious: false,
+//       customID: -1,
+//       applyBVH: true,
+//     });
+//   } else {
+//     viewer.IFC.loader.ifcManager.removeSubset(materialSelect, -1);
+//     modelID = -1;
+//     selectID = -1;
+//     multiSelectID = [];
+//   }
 // }
+
+
 function findNodeWithExpressID(node, expressID) {
   if (node.expressID === expressID) {
     return node;
@@ -183,6 +377,7 @@ async function getPlantas(model) {
   const allPlans = viewer.plans.getAll(model.modelID);
 
   for (const plan of allPlans) {
+  
     const currentPlan = viewer.plans.planLists[model.modelID][plan]; //Información  de cada planta
 
     const divBotonesPlantas = document.createElement('div'); //contenedor para cada fila de botones
@@ -330,17 +525,23 @@ async function getPlantas(model) {
       if (activeButton) {
         activeButton.classList.remove('activo');
       }
-      const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
-          btnLabelPlantasList.forEach((btnLabel) => {
-              btnLabel.style.visibility = 'hidden';
-              
-          });
-      const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
-          btn2DPlantasList.forEach((btn2D) => {
-            btn2D.style.visibility = 'hidden';
-              
-          });
+      ocultaBtnRemoveClass();
     };
+}
+function ocultaBtnRemoveClass(){
+  const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
+  btnLabelPlantasList.forEach((btnLabel) => {
+      btnLabel.style.visibility = 'hidden';
+      btnLabel.classList.remove('activoBtnLabelPlanta');  
+      
+});
+const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
+  btn2DPlantasList.forEach((btn2D) => {
+    btn2D.style.visibility = 'hidden';
+    btn2D.classList.remove('activoBtn2DPlanta');  
+});
+viewer.context.ifcCamera.cameraControls.setLookAt(posicionInicial.x, posicionInicial.y, posicionInicial.z, 0, 0, 0);
+
 }
 
 function ocultarLabels() {
@@ -365,27 +566,18 @@ function generatePlanta2D(plantaActivo) {
   // CREA UN IMAGEN DE LA CAMARA EN ESA POSICION
 
   if (plantaActivo) {
-    console.log("Botón activo");
     viewer.context.ifcCamera.cameraControls.setLookAt(0, 50, 0, 0, 0, 0);
-  } else {console.log("Desactivo");
+    viewer.context.ifcCamera.toggleProjection();
+    
+  } else {
     if (posicionInicial) {
       viewer.context.ifcCamera.cameraControls.setLookAt(posicionInicial.x, posicionInicial.y, posicionInicial.z, 0, 0, 0);
+      viewer.context.ifcCamera.toggleProjection();
       posicionInicial=null;
     }
   }
 }
 
-// async moveCameraTo2DPlanPosition(animate) {
-//   if (this.floorPlanViewCached)
-//       await this.context.ifcCamera.cameraControls.reset(animate);
-//   else
-//       await this.context.ifcCamera.cameraControls.setLookAt(0, 100, 0, 0, 0, 0, animate);
-// }
-// store3dCameraPosition() {
-//   this.context.getCamera().getWorldPosition(this.previousCamera);
-//   this.context.ifcCamera.cameraControls.getTarget(this.previousTarget);
-//   this.previousProjection = this.context.ifcCamera.projection;
-// }
 
 async function createPrecastElementsArray(modelID){
   const ifcProject = await viewer.IFC.getSpatialStructure (modelID);
@@ -454,6 +646,21 @@ function replaceOriginalModelBySubset(viewer, model, subset) {
 
 container.onclick = async () => {
   const found = await viewer.IFC.selector.pickIfcItem(false);
+  console.log("found", JSON.stringify(found));
+
+  // const boxElement= viewer.IFC.loader.ifcManager.createSubset({
+  //   scene:scene,
+  //   modelID:0,
+  //   ids: [found.id],
+  //   removePrevious:true,
+  //   applyBVH:true
+  // });
+
+  // const boxHelper=new BoxHelper (boxElement, 0xff0000);
+  // scene.add(boxHelper);
+
+
+
   if (found === null || found === undefined) {
     const container = document.getElementById('propiedades-container');
     container.style.visibility = "hidden";
@@ -680,13 +887,11 @@ floorplanButton.onclick = () => {
     floorplansActive = !floorplansActive;
     floorplanButton.classList.remove('active');
     floorplansButtonContainer.classList.remove('visible');
-    // viewer.plans.exitPlanView();
-    // viewer.edges.toggle('example-edges', false);
+    
     hideAllItems(viewer, idsTotal );
       showAllItems(viewer, idsTotal);
     floorplansButtonContainer.style.visibility = 'hidden';
-    // viewer.plans.exitPlanView();
-    // viewer.edges.toggle('example', false);
+ 
     hideAllItems(viewer, idsTotal );
       showAllItems(viewer, idsTotal);
     //desactiva los botones de plantas cuando se apaga el boton que genera los planos
@@ -697,17 +902,8 @@ floorplanButton.onclick = () => {
         button.classList.remove('activo');
       }
     }
-    const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
-          btnLabelPlantasList.forEach((btnLabel) => {
-              btnLabel.style.visibility = 'hidden';
-              
-          });
-      const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
-          btn2DPlantasList.forEach((btn2D) => {
-            btn2D.style.visibility = 'hidden';
-              
-          });
-          ocultarLabels();
+    ocultaBtnRemoveClass();
+    ocultarLabels();
     
   } else {
     floorplansActive = !floorplansActive;
