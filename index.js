@@ -32,6 +32,8 @@ botonConexion.addEventListener("click", () => {
   
   console.log("¡Clic en el botón!");
   insertaModeloFire()
+  // botonConexion.style.visibility='hidden'
+  botonConexion.style.display='none'
 });
 
 
@@ -79,6 +81,7 @@ async function insertaModeloFire() {
 
               if (documentosIguales) {
                   console.log('La colección tiene los mismos documentos y campos.');
+                  
               } else {
                   console.log('La colección tiene diferencias en documentos o campos.');
                   const checkboxContainer = document.getElementById('checkbox-container');
@@ -90,7 +93,33 @@ async function insertaModeloFire() {
     generaBotonesNumCamion(camionesUnicos);
               }
           } else {
-              console.log('La cantidad de documentos no coincide con precastElements.length.');
+            console.log('La cantidad de documentos no coincide con precastElements.length.');
+            for (const doc of querySnapshot.docs) {
+              const existingDocData = doc.data();
+              const matchingObjectIndex = precastElements.findIndex((objeto) => objeto.GlobalId === doc.id);
+      
+              if (matchingObjectIndex !== -1) {
+                  const matchingObject = precastElements[matchingObjectIndex];
+                  const fields = Object.keys(existingDocData);
+      
+                  for (const field of fields) {
+                      if (field === 'expressID') {
+                          if (existingDocData[field] !== matchingObject[field]) {
+                              matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
+                          }
+                      } else if (existingDocData[field] !== matchingObject[field]) {
+                          matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
+                      }
+                  }
+              }
+            }
+            const checkboxContainer = document.getElementById('checkbox-container');
+            checkboxContainer.innerHTML = generateCheckboxes(precastElements);
+            checkboxContainer.style.visibility = "visible"; 
+            addCheckboxListeners(precastElements, viewer);
+          
+            camionesUnicos = obtenerValorCamion(precastElements);
+            generaBotonesNumCamion(camionesUnicos);
           }
           
       } else {
@@ -206,8 +235,8 @@ async function loadModel(url) {
 
   let subset = getWholeSubset(viewer, model, allIDs);
   replaceOriginalModelBySubset(viewer, model, subset);
-  const btnImport = document.getElementById("botonImportar");
-  btnImport.style.visibility = 'visible';
+  // const btnImport = document.getElementById("botonImportar");
+  // btnImport.style.visibility = 'visible';
 
   // ARISTAS
   // const mat = new LineBasicMaterial({ color: 0x525252 });
@@ -217,6 +246,8 @@ async function loadModel(url) {
   creaBoxHelper();
   obtieneNameProject(url)
 
+  const btnBD = document.getElementById("conexion");
+  btnBD.style.visibility='visible';
   // const result = await viewer.IFC.properties.serializeAllProperties(model);
   // const file = new File(result, 'properties');
 
@@ -226,7 +257,7 @@ async function loadModel(url) {
   // link.download = 'properties.json';
   // link.click();
   // link.remove();
-
+  
 
 }
 
@@ -587,7 +618,7 @@ async function createPrecastElementsArray(modelID){
       const children = node.children;
       const exists = uniqueTypes.includes(node.type);
       // TODO: elementos de IFC excluidos BUILDING y SITE
-      if (!exists && node.type !== "IFCBUILDING" && node.type !== "IFCSITE" && node.type !== "IFCBUILDINGSTOREY" && node.type !== "IFCELEMENTASSEMBLY") {
+      if (!exists && node.type !== "IFCBUILDING" && node.type !== "IFCSITE" && node.type !== "IFCBUILDINGSTOREY" && node.type !== "IFCELEMENTASSEMBLY" && node.type !== "IFCBUILDINGELEMENTPROXY") {
           precastElements.push({expressID: node.expressID, ifcType: node.type});
       }
       if(children.length === 0){
@@ -829,19 +860,26 @@ inputText.addEventListener('change', function() {
 });
 
 function modelCopyCompletoFunction(){
-  const materialSolid = new MeshLambertMaterial({
+  // const materialSolid = new MeshLambertMaterial({
             
+  //     transparent: true,
+  //     opacity: 0.3,
+  //     color: 0x54a2c4,
+  // });
+
+  //   const materialLine = new LineBasicMaterial({ color: 0x000000 });
+
+  //   const multiMaterial = new MultiMaterial([materialSolid, materialLine]);
+
+  //   modelCopy = new Mesh(model.geometry, multiMaterial);
+  //   scene.add(modelCopy);
+  const materialSolid = new MeshLambertMaterial({
       transparent: true,
       opacity: 0.3,
       color: 0x54a2c4,
   });
-
-    const materialLine = new LineBasicMaterial({ color: 0x000000 });
-
-    const multiMaterial = new MultiMaterial([materialSolid, materialLine]);
-
-    modelCopy = new Mesh(model.geometry, multiMaterial);
-    scene.add(modelCopy);
+modelCopyCompleto = new Mesh(model.geometry, materialSolid);
+        scene.add(modelCopyCompleto);
 }
 // Seccion button - corte
 const cutButton = document.getElementById('btn-lateral-seccion');
@@ -921,12 +959,9 @@ let ifcCompletoActive = false;
 ifcCompletoButton.onclick=()=>{
   ifcCompletoActive = !ifcCompletoActive;
     if(ifcCompletoActive){
-      
       ifcCompletoButton.classList.remove('active');
-      scene.remove(modelCopy);
-      
+      scene.remove(modelCopyCompleto);
     }else{
-      // measuresActive = !measuresActive;
       ifcCompletoButton.classList.add('active');
       modelCopyCompletoFunction()
     }
