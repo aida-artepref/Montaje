@@ -149,7 +149,7 @@ async function insertaModeloFire() {
         createCheckboxesAndButtons(existingDocs, precastElements, viewer);
       }
     } else {
-      await addDocumentsToFirestore(db, projectName, precastElements);
+      // await addDocumentsToFirestore(db, projectName, precastElements);
     }
   } catch (error) {
     console.error('Error al realizar la tarea de inserción:', error);
@@ -381,8 +381,6 @@ async function loadModel(url) {
 }
 
 
-
-
 function creaBoxHelper(){
 //   const coordinates = [];
 // const alreadySaved = new Set();
@@ -428,67 +426,6 @@ function creaBoxHelper(){
   scene.add(sphere);
 
 }
-
-
-//  Colorear los elementos sólidos, excepto los IfcBuildingElementProxy
-  // model.traverse((element) => {
-  //   if (element instanceof Mesh && !(element.userData.IfcEntity === "IfcBuildingElementProxy")) {
-  //     element.material = solidMaterial;
-  //   }
-  // });
-
-//   let modelID=-1
-//   let selectID=-1
-//   let multiSelectID=[]
- 
-//   let materialSelect= new MeshLambertMaterial({
-//     transparent: true,
-//     opacity: 0.9,
-//     color: 0x54a2c4,
-//   });
-  
-
-//   let keyCtrl = false;
-//   function onKeyDown(event) {
-//     if (event.key === "Control") {
-//       keyCtrl = true;
-      
-//     }
-//   }
-
-//   function onKeyUp(event) {
-//     if (event.key === "Control") {
-//       keyCtrl = false;
-//     }
-//   }
-
-//   document.addEventListener("keydown", onKeyDown);
-//   document.addEventListener("keyup", onKeyUp);
-
-// container.addEventListener("click",(e)=>{onClick()})
-
-// function onClickSeleccion() {
-//   const found = viewer.context.castRayIfc();
-//   if (found && keyCtrl) {
-//     modelID = found.object.modelID;
-//     selectID = found.id;
-//     multiSelectID.push(selectID);
-//     let subset = viewer.IFC.loader.ifcManager.createSubset({
-//       modelID: modelID,
-//       ids: multiSelectID,
-//       material: materialSelect,
-//       scene: scene,
-//       removePrevious: false,
-//       customID: -1,
-//       applyBVH: true,
-//     });
-//   } else {
-//     viewer.IFC.loader.ifcManager.removeSubset(materialSelect, -1);
-//     modelID = -1;
-//     selectID = -1;
-//     multiSelectID = [];
-//   }
-// }
 
 
 function findNodeWithExpressID(node, expressID) {
@@ -877,7 +814,6 @@ const inputText = document.querySelector("#inputARTP input[type='text']");
 const checkBox = document.getElementById('checkLabels'); 
 const infoBusquedas = document.getElementById("infoBusquedas");
 propButton.onclick= () => {
-  // viewer.plans.goTo(model.modelID, plan);
   if(propActive){
     propActive=!propActive;
     propButton.classList.remove('active');
@@ -888,7 +824,6 @@ propButton.onclick= () => {
     inputText.value="";
     hideAllItems(viewer, idsTotal);
     showAllItems(viewer, allIDs);
-    // removeLabels(expressIDsInput);
     ocultarLabels();
     expressIDsInput=[];
         numBusquedas=0;
@@ -896,10 +831,7 @@ propButton.onclick= () => {
         if (listaElementosEncontrados) {
             infoBusquedas.removeChild(listaElementosEncontrados);
             listaElementosEncontrados = null;
-        }
-        if (modelCopy) {
-            scene.remove(modelCopy); 
-            modelCopy = null;
+            scene.remove(modelCopyCompleto); 
         }
         return;
   }else {
@@ -907,13 +839,19 @@ propButton.onclick= () => {
     propButton.classList.add('active');
     divInputText.style.display = "block";
     inputText.focus();
-  }
 
+    // compruebasi existen botones activos en divNumCamiones
+    const divNumCamiones = document.getElementById('divNumCamiones');
+    const activeButtons = divNumCamiones.querySelectorAll('.active');
+    activeButtons.forEach(button => {
+      button.click(); 
+    });
+  }
 }
 
 let numBusquedas = 0;
 let expressIDsInput;
-let modelCopy = null; 
+//let modelCopy = null; 
 let listaElementosEncontrados = null;
 
 inputText.addEventListener('change', function() {
@@ -976,24 +914,14 @@ inputText.addEventListener('change', function() {
           removeLabels(expressIDsInput);
           divInputText.style.display = "none";
           scene.remove(modelCopyCompleto);
+          scene.remove(modelCopy);
       }
   }
 });
 
+let modelCopyCompleto=null;
 function modelCopyCompletoFunction(){
-  // const materialSolid = new MeshLambertMaterial({
-            
-  //     transparent: true,
-  //     opacity: 0.3,
-  //     color: 0x54a2c4,
-  // });
 
-  //   const materialLine = new LineBasicMaterial({ color: 0x000000 });
-
-  //   const multiMaterial = new MultiMaterial([materialSolid, materialLine]);
-
-  //   modelCopy = new Mesh(model.geometry, multiMaterial);
-  //   scene.add(modelCopy);
   const materialSolid = new MeshLambertMaterial({
       transparent: true,
       opacity: 0.3,
@@ -1077,16 +1005,18 @@ floorplanButton.onclick = () => {
 // Muestra el ifc COmpleto
 const ifcCompletoButton = document.getElementById('btn-ifc-completo');
 let ifcCompletoActive = false;
-ifcCompletoButton.onclick=()=>{
-  ifcCompletoActive = !ifcCompletoActive;
-    if(ifcCompletoActive){
-      ifcCompletoButton.classList.remove('active');
-      scene.remove(modelCopyCompleto);
-    }else{
-      ifcCompletoButton.classList.add('active');
-      modelCopyCompletoFunction()
-    }
-}
+
+ifcCompletoButton.onclick = () => {
+  ifcCompletoActive=!ifcCompletoActive;
+  if (ifcCompletoActive) {
+    ifcCompletoButton.classList.add('active');
+    modelCopyCompletoFunction();
+  } else {
+    ifcCompletoButton.classList.remove('active');
+    scene.remove(modelCopyCompleto);
+    scene.remove(modelCopy);
+  }
+};
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1188,14 +1118,21 @@ function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ, expre
           }
       }
       if (count === 0) {
-          const label = document.createElement('p');
-          label.textContent = ART_Pieza;
-          label.classList.add('pieza-label');
-          label.id = expressID;
-          const labelObject = new CSS2DObject(label);
-          labelObject.position.set(parseFloat(ART_CoordX) / 1000, parseFloat(ART_CoordZ) / 1000, (-parseFloat(ART_CoordY) / 1000));
-          scene.add(labelObject);
-      }
+        const label = document.createElement('p');
+        label.textContent = ART_Pieza;
+        label.classList.add('pieza-label');
+        label.id = expressID;
+        const labelObject = new CSS2DObject(label);
+        const adjustedX = parseFloat(ART_CoordX) / 1000;
+        const adjustedY = -parseFloat(ART_CoordY) / 1000;
+        const adjustedZ = parseFloat(ART_CoordZ) / 1000;
+        labelObject.position.set(adjustedX, adjustedZ, adjustedY); // Ajustar coordenadas Y debido a la conversión de ejes
+        
+        console.log("Coordenadas ajustadas:", adjustedX, adjustedY, adjustedZ);
+        // console.log(labelObject.scale);
+        // console.log(labelObject.rotation);
+        scene.add(labelObject);
+    }
   }
 }
 
@@ -1319,6 +1256,8 @@ async function generateLabels(expressIDs) {
       }
     }
     muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ, expressID);
+      console.log("ART_Pieza: "+ART_Pieza+" ART_CoordX: "+ART_CoordX +" ART_CoordY: "+ART_CoordY +" ART_CoordZ: "+ART_CoordZ, + "expressID: "+expressID)
+    
   }
   
 }
@@ -1374,10 +1313,7 @@ function generaBotonesNumCamion(camionesUnicos) {
       const isActive = btn.classList.contains("active");
       if (isActive) {
           viewer.IFC.selector.unpickIfcItems();
-
           activeExpressIDs = activeExpressIDs.filter(id => !expressIDs.includes(id));
-
-          
           btn.classList.remove("active");
           btn.style.justifyContent = "center";
           btn.style.color = "";
@@ -1393,11 +1329,8 @@ function generaBotonesNumCamion(camionesUnicos) {
                 piezaLabels.forEach(function(label) {
                     label.style.visibility = 'hidden';
                 });
-          
           activeExpressIDs = activeExpressIDs.concat(expressIDs);
-
           viewer.IFC.selector.unpickIfcItems();
-          
           btn.classList.add("active");
           btn.style.color = "red";
           botonesActivos++;
@@ -1481,7 +1414,6 @@ function generaBotonesNumCamion(camionesUnicos) {
     
   }
 }
-
 
 
 let activeExpressIDs = [];
