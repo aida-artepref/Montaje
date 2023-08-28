@@ -30,10 +30,7 @@ const db = getFirestore(app);
 const botonConexion = document.getElementById('conexion')
 
 botonConexion.addEventListener("click", () => {
-  
-  console.log("¡Clic en el botón!");
   insertaModeloFire()
-  // botonConexion.style.visibility='hidden'
   botonConexion.style.display='none'
 });
 
@@ -333,10 +330,11 @@ let allPlans;
 let model;
 let allIDs;
 let idsTotal;
+let expressIDNoMontados=[];
 let camionesUnicos=[];
 let uniqueTypes=[];
 let precastElements=[];
-
+let subset;
 async function loadModel(url) {
   model = await viewer.IFC.loadIfcUrl(url);
   console.log(model);
@@ -350,33 +348,18 @@ async function loadModel(url) {
 
   allIDs = getAllIds(model);
   idsTotal = getAllIds(model);
+  expressIDNoMontados = getAllIds(model);
   viewer.shadows = true;
 
-  let subset = getWholeSubset(viewer, model, allIDs);
+  subset = getWholeSubset(viewer, model, allIDs);
   replaceOriginalModelBySubset(viewer, model, subset);
-  // const btnImport = document.getElementById("botonImportar");
-  // btnImport.style.visibility = 'visible';
 
-  // ARISTAS
-  // const mat = new LineBasicMaterial({ color: 0x525252 });
-  // viewer.edges.createFromSubset(model.modelID, subset, mat);
-  // viewer.edges.toggle(model.modelID, true);
   viewer.context.fitToFrame();
   creaBoxHelper();
   obtieneNameProject(url)
 
   const btnBD = document.getElementById("conexion");
   btnBD.style.visibility='visible';
-  // const result = await viewer.IFC.properties.serializeAllProperties(model);
-  // const file = new File(result, 'properties');
-
-  // const link = document.createElement('a');
-  // document.body.appendChild(link);
-  // link.href = URL.createObjectURL(file);
-  // link.download = 'properties.json';
-  // link.click();
-  // link.remove();
-  
 
 }
 
@@ -723,6 +706,72 @@ function getWholeSubset(viewer, model, allIDs) {
 	});
 }
 
+
+const materialRojo = new MeshLambertMaterial({
+  transparent: true,
+  opacity: 0.5,
+  color: 0xff0000, 
+  depthTest: false,
+  
+});
+
+const materialVerde = new MeshLambertMaterial({
+  transparent: true,
+  opacity: 0.5,
+  color: 0x00ff00, 
+  depthTest: false,
+  
+});
+const materialGris = new MeshBasicMaterial({
+  transparent: true,
+  opacity: 1,
+  color: 0x808080, 
+  depthTest: false,
+  
+});
+
+function getWholeSubsetColorVerde(viewer, model, expressIDMontados) {
+  if (expressIDMontados.length === 0) {
+      return; 
+  }
+  return viewer.IFC.loader.ifcManager.createSubset({
+      modelID: model.modelID,
+      ids: expressIDMontados,
+      applyBVH: true,
+      scene: viewer.context.getScene(),
+      removePrevious: true,
+      customID: 'montaje-verde',
+      material: materialVerde,
+  });
+}
+
+function getWholeSubsetColorRojo(viewer, model, expressIDNoMontados) {
+  if (expressIDNoMontados.length === 0) {
+    return; // array vacío, sale
+}
+	return viewer.IFC.loader.ifcManager.createSubset({
+		modelID: model.modelID,
+		ids: expressIDNoMontados,
+		applyBVH: true,
+    scene:viewer.context.getScene(),
+		removePrevious: true,
+		customID: 'montaje-rojo',
+    material:materialRojo,
+	});
+}
+
+function getWholeSubsetColorGris(viewer, model, allIDs) {
+	return viewer.IFC.loader.ifcManager.createSubset({
+		modelID: model.modelID,
+		ids: allIDs,
+		applyBVH: true,
+    scene:viewer.context.getScene(),
+		removePrevious: true,
+		customID: 'montaje-gris',
+    material:materialGris,
+	});
+}
+
 function replaceOriginalModelBySubset(viewer, model, subset) {
 	const items = viewer.context.items;  //obtiene el objeto "items" del contexto del visor y lo almacena en una variable local.
 	items.pickableIfcModels = items.pickableIfcModels.filter(model => model !== model);  //Filtra las matrices y elimina cualquier referencia al modelo original
@@ -732,49 +781,64 @@ function replaceOriginalModelBySubset(viewer, model, subset) {
 	items.pickableIfcModels.push(subset); 
 }
 
+function replaceOriginalBySubset(viewer) {
+	const items = viewer.context.items;   
+  items.ifcModels.push(subset); 
+  items.pickableIfcModels.push(subset);
+	model.removeFromParent();  //Elimina el modelo original de su contenedor principal
+  // items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+  // items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+}
+
+
 container.onclick = async () => {
   const found = await viewer.IFC.selector.pickIfcItem(false);
-  console.log("found", JSON.stringify(found));
-
-  // const boxElement= viewer.IFC.loader.ifcManager.createSubset({
-  //   scene:scene,
-  //   modelID:0,
-  //   ids: [found.id],
-  //   removePrevious:true,
-  //   applyBVH:true
-  // });
-
-  // const boxHelper=new BoxHelper (boxElement, 0xff0000);
-  // scene.add(boxHelper);
-
-
-
+ // console.log("found", JSON.stringify(found));
+  
   if (found === null || found === undefined) {
     const container = document.getElementById('propiedades-container');
     container.style.visibility = "hidden";
     viewer.IFC.selector.unpickIfcItems();
     return;
   }
-  const expressID = found.id;
 
-  let ART_Pieza = null;
-  let ART_Longitud = null;
-  let ART_Volumen = null;
-  let ART_Ancho = null;
-
-  for (const precast of precastElements) {
-    if (precast.expressID === expressID) {
-      ART_Pieza = precast['ART_Pieza'];
-      ART_Longitud = precast['ART_Longitud'];
-      ART_Peso=precast['ART_Peso'];
-      // ART_Volumen = precast['ART_Volumen'];
-      // ART_Ancho = parseFloat(precast['ART_Ancho']).toFixed(2);
-      // ART_Ancho = parseFloat(ART_Ancho);
-      break;
+  if (btnEstadoMontaje.classList.contains('active')) {
+  
+    if (found && found.id) {
+      console.log("existe foundID"+found.id);
+      if (expressIDMontados.includes(found.id)) {
+        const indexToRemove = expressIDMontados.indexOf(found.id);
+        if (indexToRemove !== -1) {
+          expressIDMontados.splice(indexToRemove, 1);
+        }
+        expressIDNoMontados.push(found.id);
+      } else if (expressIDNoMontados.includes(found.id)) {
+        const indexToRemove = expressIDNoMontados.indexOf(found.id);
+        if (indexToRemove !== -1) {
+          expressIDNoMontados.splice(indexToRemove, 1);
+        }
+        expressIDMontados.push(found.id);
+      }
+      
     }
-  }
+    document.getElementById("estadoPieza").click();
+    document.getElementById("estadoPieza").click();
+  }else{
+    const expressID = found.id;
 
-  muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso);
+    let ART_Pieza = null;
+    let ART_Longitud = null;
+
+    for (const precast of precastElements) {
+      if (precast.expressID === expressID) {
+        ART_Pieza = precast['ART_Pieza'];
+        ART_Longitud = precast['ART_Longitud'];
+        ART_Peso=precast['ART_Peso'];
+        break;
+      }
+    }
+    muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso);
+  }
 };
 
 function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso) {
@@ -888,15 +952,8 @@ inputText.addEventListener('change', function() {
               } else {
                   infoBusquedas.appendChild(nuevaListaElementosEncontrados);
               }
-
               listaElementosEncontrados = nuevaListaElementosEncontrados;
-
               hideAllItems(viewer, idsTotal);
-              // if (modelCopy) {
-              //     scene.remove(modelCopy); 
-              // }
-              
-              
               showAllItems(viewer, expressIDsInput);
           } else {
               infoBusquedas.querySelector("p").textContent = "No existe el elemento: " + elementoBuscado;
@@ -914,7 +971,6 @@ inputText.addEventListener('change', function() {
           removeLabels(expressIDsInput);
           divInputText.style.display = "none";
           scene.remove(modelCopyCompleto);
-          scene.remove(modelCopy);
       }
   }
 });
@@ -1014,9 +1070,52 @@ ifcCompletoButton.onclick = () => {
   } else {
     ifcCompletoButton.classList.remove('active');
     scene.remove(modelCopyCompleto);
-    scene.remove(modelCopy);
   }
 };
+
+
+let expressIDMontados=[];
+
+let btnEstadoMontaje = document.getElementById('estadoPieza');
+let subsetRojo=null;
+let subsetVerde=null;
+
+btnEstadoMontaje.onclick=async()=>{
+  btnEstadoMontaje.classList.toggle('active');
+  viewer.IFC.selector.unpickIfcItems();
+  
+  if (btnEstadoMontaje.classList.contains('active')) {
+    if(subset){
+      subset.removeFromParent();
+      const items = viewer.context.items;   
+      items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+      items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+    }
+    console.log("Creando subconjunto: " +expressIDNoMontados, expressIDNoMontados.length);
+    subsetVerde=getWholeSubsetColorVerde(viewer, model, expressIDMontados);
+    replaceOriginalBySubset(viewer);
+    subsetRojo=getWholeSubsetColorRojo(viewer, model, expressIDNoMontados);
+    replaceOriginalBySubset(viewer);
+    
+  } else {
+    if(subsetRojo){
+      subsetRojo.removeFromParent();
+      const items = viewer.context.items;   
+      items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+      items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+    }
+    if(subsetVerde){
+      subsetVerde.removeFromParent();
+      const items = viewer.context.items;   
+      items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+      items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+    }
+    console.log("Despulsando:" +allIDs, allIDs.length);
+    scene.add(subset);
+    replaceOriginalModelBySubset(viewer, model, subset);
+  }
+};
+
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1214,7 +1313,7 @@ function addCheckboxListeners(precastElements, viewer) {
   for (let i = 0; i < checkboxes.length; i++) {
     checkboxes[i].addEventListener('change', function() {
       viewer.IFC.selector.unpickIfcItems();
-      const isNotChecked = this.checked;
+      const isChecked = this.checked;
       const artPieza = this.getAttribute('data-art-pieza');
       const visibleIds = [];
       const parentText = this.parentNode.textContent.trim();
@@ -1226,16 +1325,62 @@ function addCheckboxListeners(precastElements, viewer) {
         }
       });
       console.log(visibleIds);
-      if (isNotChecked) {
-        showAllItems(viewer, visibleIds);
-        
+      if (isChecked) {
+        let visiblesIdsV = visibleIds.filter(id => expressIDMontados.includes(id));
+        let visiblesIdsR = visibleIds.filter(id => expressIDNoMontados.includes(id));
+
+        if (document.getElementById("estadoPieza").classList.contains("active")) {
+          if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0) {
+            showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+            showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+          } else if (visiblesIdsV.length === 0 && visiblesIdsR.length > 0) {
+            showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+          } else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+            showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+          }
+        }
       } else {
+        if (!document.getElementById("estadoPieza").classList.contains("active")) {
+        
           hideAllItems(viewer, visibleIds);
-        removeLabels(visibleIds);
-        const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
-        if (button && button.classList.contains('pulsado')) {
-          button.classList.remove('pulsado');
           removeLabels(visibleIds);
+          const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
+          if (button && button.classList.contains('pulsado')) {
+              button.classList.remove('pulsado');
+              removeLabels(visibleIds);
+          }
+        }
+        if (document.getElementById("estadoPieza").classList.contains("active")) {
+          let visiblesIdsV = visibleIds.filter(id => expressIDMontados.includes(id));
+          let visiblesIdsR = visibleIds.filter(id => expressIDNoMontados.includes(id));
+
+          if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0 ) {
+            hideAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+            hideAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+          }else if (visiblesIdsV.length === 0 && visiblesIdsR.length > 0) {
+            hideAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+          }else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+            hideAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+          }
+
+          
+          replaceOriginalBySubset(viewer);
+          const items = viewer.context.items;   
+          items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+          items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+          items.ifcModels.push(subsetVerde); 
+          items.pickableIfcModels.push(subsetVerde);
+          items.ifcModels.push(subsetRojo); 
+          items.pickableIfcModels.push(subsetRojo);
+  
+          model.removeFromParent();  //Elimina el modelo original de su contenedor principal
+	
+          removeLabels(visibleIds);
+          const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
+          if (button && button.classList.contains('pulsado')) {
+              button.classList.remove('pulsado');
+              removeLabels(visibleIds);
+          }
         }
       }
     });
@@ -1439,6 +1584,15 @@ function hideAllItems(viewer, ids) {
     }); 
     
 }
+function hideAllItems2(viewer, ids, customID, material) {
+  viewer.IFC.loader.ifcManager.removeFromSubset(
+      0,
+      ids,
+      customID,
+      material,
+  );
+}
+
 
 function showAllItems(viewer, ids) {
 	viewer.IFC.loader.ifcManager.createSubset({
@@ -1447,6 +1601,16 @@ function showAllItems(viewer, ids) {
 		removePrevious: false,
 		applyBVH: true,
 		customID: 'full-model-subset',
+	});
+}
+function showAllItems2(viewer, ids, customID, material) {
+	viewer.IFC.loader.ifcManager.createSubset({
+		modelID: 0,
+		ids,
+		removePrevious: false,
+		applyBVH: true,
+		customID: customID,
+    material: material,
 	});
 }
 let btnCero
