@@ -1006,6 +1006,7 @@ cutButton.onclick = () => {
 
 let planoCorteCont=0;
 // TODO: cortar y medir
+
 container.addEventListener("mousedown", async () => {
   if (cutActive) { // Verificar si está activo el modo de corte
     const found = await viewer.IFC.selector.pickIfcItem(false);
