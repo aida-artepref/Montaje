@@ -1169,13 +1169,14 @@ function activaCheck(){
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-window.onclick = async () => {
-    if(cutActive) {
-        viewer.clipper.createPlane();
-    }else if (measuresActive){
-        viewer.dimensions.create();
-    }
-};
+// window.onclick = async () => {
+//     // if(cutActive) {
+//     //     viewer.clipper.createPlane();
+//     // }else 
+//     if (measuresActive){
+//         viewer.dimensions.create();
+//     }
+// };
 
 //*********************************************************************************************************** */
 //cuando importa un archivo CSV rellena el array con las propiedades necesarias y genera los botones con numCamion *****************************
