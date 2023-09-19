@@ -489,7 +489,9 @@ async function getPlantas(model) {
         // recursiva para buscar los elementos hijos en la estructura 
         function findElementsInChildren(node) {
           for (const childNode of node.children) {
-            elementsArray.push(childNode.expressID);
+            if (!elementsArray.includes(childNode.expressID)) {
+              elementsArray.push(childNode.expressID);
+            }
             findElementsInChildren(childNode);
           }
         }
@@ -558,7 +560,6 @@ async function getPlantas(model) {
       }
     }
     
-   
     let plantaActivo = false;
     
     btn2DPlantas.onclick = () => {
@@ -722,13 +723,13 @@ const materialVerde = new MeshLambertMaterial({
   depthTest: false,
   
 });
-const materialGris = new MeshBasicMaterial({
-  transparent: true,
-  opacity: 1,
-  color: 0x808080, 
-  depthTest: false,
+// const materialGris = new MeshBasicMaterial({
+//   transparent: true,
+//   opacity: 1,
+//   color: 0x808080, 
+//   depthTest: false,
   
-});
+// });
 
 function getWholeSubsetColorVerde(viewer, model, expressIDMontados) {
   if (expressIDMontados.length === 0) {
@@ -760,17 +761,17 @@ function getWholeSubsetColorRojo(viewer, model, expressIDNoMontados) {
 	});
 }
 
-function getWholeSubsetColorGris(viewer, model, allIDs) {
-	return viewer.IFC.loader.ifcManager.createSubset({
-		modelID: model.modelID,
-		ids: allIDs,
-		applyBVH: true,
-    scene:viewer.context.getScene(),
-		removePrevious: true,
-		customID: 'montaje-gris',
-    material:materialGris,
-	});
-}
+// function getWholeSubsetColorGris(viewer, model, allIDs) {
+// 	return viewer.IFC.loader.ifcManager.createSubset({
+// 		modelID: model.modelID,
+// 		ids: allIDs,
+// 		applyBVH: true,
+//     scene:viewer.context.getScene(),
+// 		removePrevious: true,
+// 		customID: 'montaje-gris',
+//     material:materialGris,
+// 	});
+// }
 
 function replaceOriginalModelBySubset(viewer, model, subset) {
 	const items = viewer.context.items;  //obtiene el objeto "items" del contexto del visor y lo almacena en una variable local.
@@ -796,8 +797,8 @@ container.onclick = async () => {
  // console.log("found", JSON.stringify(found));
   
   if (found === null || found === undefined) {
-    const container = document.getElementById('propiedades-container');
-    container.style.visibility = "hidden";
+    const prop_container = document.getElementById('propiedades-container');
+    prop_container.style.visibility = "hidden";
     viewer.IFC.selector.unpickIfcItems();
     return;
   }
@@ -995,12 +996,50 @@ cutButton.onclick = () => {
         cutActive = !cutActive;
         cutButton.classList.remove('active');
         viewer.clipper.deleteAllPlanes();
+        planoCorteCont=0;
     } else {
         cutActive = !cutActive;
         cutButton.classList.add('active');
         viewer.clipper.active = cutActive;
     };
 };
+
+let planoCorteCont=0;
+// TODO: cortar y medir
+container.addEventListener("mousedown", async () => {
+  if (cutActive) { // Verificar si está activo el modo de corte
+    const found = await viewer.IFC.selector.pickIfcItem(false);
+    viewer.IFC.selector.unpickIfcItems();
+  
+    if (found !== null && found !== undefined) {
+      // Verificar si ya se ha creado un plano de corte en el eje X
+      if (planoCorteCont===0) {
+        creaPlano();
+        planoCorteCont++
+      }
+    }
+    if (measuresActive) {
+      viewer.dimensions.create();
+    }
+  }
+});
+
+
+function creaPlano(){
+
+  viewer.clipper.createPlane();
+          const ifcPlane = viewer.clipper.planes[viewer.clipper.planes.length - 1];
+    
+          if (ifcPlane.normal.y === 1) {
+            ifcPlane.normal.y = -1;
+          }
+          if (ifcPlane.normal.x === 1) {
+            ifcPlane.normal.x = -1;
+          }
+          if (ifcPlane.normal.z === 1) {
+            ifcPlane.normal.z = -1;
+          }
+  }
 
 //Measure button
 // Dimensions button
@@ -1083,15 +1122,17 @@ let subsetVerde=null;
 btnEstadoMontaje.onclick=async()=>{
   btnEstadoMontaje.classList.toggle('active');
   viewer.IFC.selector.unpickIfcItems();
-  
-  if (btnEstadoMontaje.classList.contains('active')) {
+
+  if (btnEstadoMontaje.classList.contains('active' )) {
     if(subset){
+     // activaCheck();
       subset.removeFromParent();
       const items = viewer.context.items;   
       items.ifcModels = items.ifcModels.filter(s=>s !== subset)
       items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
     }
-    console.log("Creando subconjunto: " +expressIDNoMontados, expressIDNoMontados.length);
+    console.log("Creando subconjuntoRojo: " +expressIDNoMontados, expressIDNoMontados.length);
+    console.log("Creando subconjuntoVerde: " +expressIDMontados, expressIDMontados.length);
     subsetVerde=getWholeSubsetColorVerde(viewer, model, expressIDMontados);
     replaceOriginalBySubset(viewer);
     subsetRojo=getWholeSubsetColorRojo(viewer, model, expressIDNoMontados);
@@ -1116,6 +1157,14 @@ btnEstadoMontaje.onclick=async()=>{
   }
 };
 
+function activaCheck(){
+  const checkboxContainer = document.getElementById("checkbox-container");
+  const checkboxes = checkboxContainer.querySelectorAll("input[type='checkbox']");
+
+  checkboxes.forEach((checkbox) => {
+  checkbox.checked = true;
+});
+}
 
 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -1307,6 +1356,7 @@ function removeLabels(expressIDs) {
   }
 }
 
+const checkboxStates = {};
 function addCheckboxListeners(precastElements, viewer) {
   const checkboxes = document.querySelectorAll('input[type="checkbox"]');
   
@@ -1315,6 +1365,7 @@ function addCheckboxListeners(precastElements, viewer) {
       viewer.IFC.selector.unpickIfcItems();
       const isChecked = this.checked;
       const artPieza = this.getAttribute('data-art-pieza');
+      checkboxStates[artPieza] = this.checked;
       const visibleIds = [];
       const parentText = this.parentNode.textContent.trim();
       const letter = parentText.charAt(0).toUpperCase();
@@ -1337,7 +1388,9 @@ function addCheckboxListeners(precastElements, viewer) {
             showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
           } else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
             showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
-          }
+          } 
+        }else {
+          showAllItems(viewer,  );
         }
       } else {
         if (!document.getElementById("estadoPieza").classList.contains("active")) {
@@ -1355,25 +1408,66 @@ function addCheckboxListeners(precastElements, viewer) {
           let visiblesIdsR = visibleIds.filter(id => expressIDNoMontados.includes(id));
 
           if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0 ) {
-            hideAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
-            hideAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+            try{
+              hideAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+            //hideAllItemsV(viewer, visiblesIdsV, materialVerde);
+            } catch(error){
+              console.log(error)
+            }
+            try{
+              hideAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+            }catch(error){
+              console.log(error)
+            }
           }else if (visiblesIdsV.length === 0 && visiblesIdsR.length > 0) {
-            hideAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+            
+            try{
+              hideAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+            } catch(error){
+              console.log(error)
+            }
           }else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+            try{
             hideAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+           
+            }catch(error){
+              console.log(error)
+            }
+            // const items = viewer.context.items;   
+            // items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+            // items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
           }
 
           
-          replaceOriginalBySubset(viewer);
+          //replaceOriginalBySubset(viewer);
           const items = viewer.context.items;   
-          items.ifcModels = items.ifcModels.filter(s=>s !== subset)
-          items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
-          items.ifcModels.push(subsetVerde); 
-          items.pickableIfcModels.push(subsetVerde);
-          items.ifcModels.push(subsetRojo); 
-          items.pickableIfcModels.push(subsetRojo);
-  
-          model.removeFromParent();  //Elimina el modelo original de su contenedor principal
+          if(items){
+            // items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+            // items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+
+
+            // if(subsetRojo){
+              
+            //   const items = viewer.context.items;   
+            //   items.ifcModels = items.ifcModels.filter(s=>s !== subsetRojo)
+            //   items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subsetRojo)
+            // }
+            // if(subsetVerde){
+              
+            //   const items = viewer.context.items;   
+            //   items.ifcModels = items.ifcModels.filter(s=>s !== subsetVerde)
+            //   items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subsetVerde)
+            // }
+
+
+            items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+            items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+            items.ifcModels.push(subsetVerde); 
+            items.pickableIfcModels.push(subsetVerde);
+            items.ifcModels.push(subsetRojo); 
+            items.pickableIfcModels.push(subsetRojo);
+          }
+          //model.removeFromParent();  //Elimina el modelo original de su contenedor principal
 	
           removeLabels(visibleIds);
           const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
@@ -1574,7 +1668,7 @@ function obtenerValorCamion(precastElements) {
   return Array.from(valoresCamion);
 }
 
-function hideAllItems(viewer, ids) {
+function hideAllItemsFor(viewer, ids) {
 	ids.forEach(function(id) {
         viewer.IFC.loader.ifcManager.removeFromSubset(
             0,
@@ -1582,8 +1676,25 @@ function hideAllItems(viewer, ids) {
             'full-model-subset',
         );
     }); 
-    
 }
+
+function hideAllItems(viewer, ids) {
+  viewer.IFC.loader.ifcManager.removeFromSubset(
+      0,
+      ids,
+      'full-model-subset',
+  );
+}
+
+function hideAllItemsV(viewer, ids, materialVerde) {
+  viewer.IFC.loader.ifcManager.removeFromSubset(
+      0,
+      ids,
+      'montaje-verde',
+      materialVerde,
+  );
+}
+
 function hideAllItems2(viewer, ids, customID, material) {
   viewer.IFC.loader.ifcManager.removeFromSubset(
       0,
@@ -1613,6 +1724,7 @@ function showAllItems2(viewer, ids, customID, material) {
     material: material,
 	});
 }
+
 let btnCero
 function agregarBotonCero() {
   viewer.IFC.selector.unpickIfcItems();
