@@ -117,18 +117,6 @@ function createCheckboxesAndButtons(existingDocs, precastElements, viewer) {
   generaBotonesNumCamion(camionesUnicos);
 }
 
-async function addDocumentsToFirestore(db, projectName, precastElements) {
-  try {
-    console.log('La colección está vacía. Agregando documentos...');
-    for (const objeto of precastElements) {
-      const docRef = doc(db, projectName, objeto.GlobalId);
-      await setDoc(docRef, objeto);
-      console.log('Documento agregado:', objeto);
-    }
-  } catch (error) {
-    console.error('Error al agregar los documentos:', error);
-  }
-}
 
 async function insertaModeloFire() {
   try {
@@ -152,104 +140,6 @@ async function insertaModeloFire() {
     console.error('Error al realizar la tarea de inserción:', error);
   }
 }
-
-//recoge datos de una manera mas optimizada, vuelca coleccion en array precastElements, con ello conseguimos que solo sea una operacion deescritura
-// async function insertaModeloFire() {
-//   try {
-//       collectionRef = collection(db, projectName);
-//       const q = query(collectionRef);
-
-//       const querySnapshot = await getDocs(q);
-//       const existingDocsCount = querySnapshot.docs.length;
-//       const auxiliar = querySnapshot.docs.map((doc) => doc.data()); // Volcar los datos de Firebase en un array auxiliar
-
-//       if (existingDocsCount > 0) {
-//           console.log('La colección ya existe: ' + projectName);
-//           console.log('Número de piezas existentes en: ' + projectName, existingDocsCount);
-
-//           if (existingDocsCount === precastElements.length) {
-//               let documentosIguales = true;
-
-//               for (const matchingObject of precastElements) {
-//                   const existingDocData = auxiliar.find((objeto) => objeto.GlobalId === matchingObject.GlobalId);
-
-//                   if (!existingDocData) {
-//                       console.log('Documento faltante:', matchingObject.GlobalId);
-//                       documentosIguales = false;
-//                   } else {
-//                       const fields = Object.keys(existingDocData);
-//                       let hasChanges = false;
-
-//                       for (const field of fields) {
-//                           if (field === 'expressID') {
-//                               if (existingDocData[field] !== matchingObject[field]) {
-//                                   hasChanges = true;
-//                                   matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
-//                               }
-//                           } else if (existingDocData[field] !== matchingObject[field]) {
-//                               hasChanges = true;
-//                               matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
-//                           }
-//                       }
-
-//                       if (hasChanges) {
-//                           documentosIguales = false;
-//                       }
-//                   }
-//               }
-
-//               if (documentosIguales) {
-//                   console.log('La colección tiene los mismos documentos y campos.');
-//               } else {
-//                   console.log('La colección tiene diferencias en documentos o campos.');
-//                   const checkboxContainer = document.getElementById('checkbox-container');
-//                   checkboxContainer.innerHTML = generateCheckboxes(precastElements);
-//                   checkboxContainer.style.visibility = "visible";
-//                   addCheckboxListeners(precastElements, viewer);
-
-//                   camionesUnicos = obtenerValorCamion(precastElements);
-//                   generaBotonesNumCamion(camionesUnicos);
-//               }
-//           } else {
-//               console.log('La cantidad de documentos no coincide con precastElements.length.');
-//               for (const matchingObject of precastElements) {
-//                   const existingDocData = auxiliar.find((objeto) => objeto.GlobalId === matchingObject.GlobalId);
-
-//                   if (existingDocData) {
-//                       const fields = Object.keys(existingDocData);
-
-//                       for (const field of fields) {
-//                           if (field === 'expressID') {
-//                               if (existingDocData[field] !== matchingObject[field]) {
-//                                   matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
-//                               }
-//                           } else if (existingDocData[field] !== matchingObject[field]) {
-//                               matchingObject[field] = existingDocData[field]; // Actualizar el campo en el objeto del array
-//                           }
-//                       }
-//                   }
-//               }
-//               const checkboxContainer = document.getElementById('checkbox-container');
-//               checkboxContainer.innerHTML = generateCheckboxes(precastElements);
-//               checkboxContainer.style.visibility = "visible";
-//               addCheckboxListeners(precastElements, viewer);
-
-//               camionesUnicos = obtenerValorCamion(precastElements);
-//               generaBotonesNumCamion(camionesUnicos);
-//           }
-
-//       } else {
-//           console.log('La colección está vacía. Agregando documentos...');
-//           for (const objeto of precastElements) {
-//               const docRef = doc(db, projectName, objeto.GlobalId);
-//               await setDoc(docRef, objeto);
-//               console.log('Documento agregado:', objeto);
-//           }
-//       }
-//   } catch (error) {
-//       console.error('Error al agregar los documentos:', error);
-//   }
-// }
 
 
 let projectName = null;
@@ -1392,7 +1282,7 @@ function addCheckboxListeners(precastElements, viewer) {
             showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
           } 
         }else {
-          showAllItems(viewer,  );
+          showAllItems(viewer, visibleIds );
         }
       } else {
         if (!document.getElementById("estadoPieza").classList.contains("active")) {
