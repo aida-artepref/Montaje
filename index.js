@@ -645,6 +645,24 @@ function replaceOriginalBySubset(viewer) {
   // items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
 }
 
+function verificarBotonesActivos() {
+  let divNumCamiones = document.getElementById("divNumCamiones");
+  let btnsNumCam = divNumCamiones.getElementsByClassName("btnNumCamion");
+
+  let algunBotonActivoCam = false;
+
+  for (let i = 0; i < btnsNumCam.length; i++) {
+    if (btnsNumCam[i].classList.contains("active")) {
+      algunBotonActivoCam = true;
+      break; // Puedes detener la iteración si encuentras al menos uno
+    }
+  }
+
+  return algunBotonActivoCam;
+}
+
+
+
 
 container.onclick = async () => {
   const found = await viewer.IFC.selector.pickIfcItem(false);
@@ -656,7 +674,10 @@ container.onclick = async () => {
     return;
   }
 
-  if (btnEstadoMontaje.classList.contains('active')) {
+
+  let algunBotonActivoCam=verificarBotonesActivos() ;
+
+  if (btnEstadoMontaje.classList.contains('active') && !algunBotonActivoCam) {
   
     if (found && found.id) {
       console.log("existe foundID"+found.id);
@@ -666,6 +687,7 @@ container.onclick = async () => {
           expressIDMontados.splice(indexToRemove, 1);
         }
         expressIDNoMontados.push(found.id);
+
       } else if (expressIDNoMontados.includes(found.id)) {
         const indexToRemove = expressIDNoMontados.indexOf(found.id);
         if (indexToRemove !== -1) {
@@ -673,7 +695,6 @@ container.onclick = async () => {
         }
         expressIDMontados.push(found.id);
       }
-      
     }
     
     document.getElementById("estadoPieza").click();
@@ -976,7 +997,7 @@ btnEstadoMontaje.onclick=async()=>{
   btnEstadoMontaje.classList.toggle('active');
   viewer.IFC.selector.unpickIfcItems();
 
-  // Aquí comprobamos el estado de los checkboxes
+  // compruebamos el estado de los checkboxes
   const checkboxes = document.querySelectorAll('input[type="checkbox"]');
   const checkedArtPiezas = [];
 
@@ -1013,6 +1034,9 @@ console.log("ID DE ELEMENTOS CHECK: "+elVisiblesCheck);
     const elVisiCheckNoMontados = elVisiblesCheck.filter((element) =>
       expressIDNoMontados.includes(element)
     );
+
+    
+
 
     if(subset){
      // activaCheck();
@@ -1264,6 +1288,8 @@ function addCheckboxListeners(precastElements, viewer) {
           }
         }
       }
+      // document.getElementById("estadoPieza").click();
+      // document.getElementById("estadoPieza").click();
     });
   }
 }
@@ -1288,157 +1314,320 @@ async function generateLabels(expressIDs) {
   
 }
 
+
+function limpiarDivNumCamiones() {
+  const btnNumCamiones = document.getElementById("divNumCamiones");
+  btnNumCamiones.innerHTML = "";
+  return btnNumCamiones;
+}
+
+function crearBotonNumCamion(camion) {
+  const btn = document.createElement("button");
+  btn.setAttribute("class", "btnNumCamion");
+  btn.textContent = camion;
+  return btn;
+}
+
+function colorBtnCamion(btn,camion){
+  precastElements.forEach(function(precastElement) {
+    if (parseInt(precastElement.Camion) === camion) {
+      const tipoTransporte = precastElement.tipoTransporte;
+      if (tipoTransporte.includes("E")) {
+        btn.style.backgroundColor = "#6d4c90";
+      } else if (tipoTransporte.includes("A")) {
+        btn.style.backgroundColor = "#4c7a90";
+      } else if (tipoTransporte.includes("C")) {
+        btn.style.backgroundColor = "#90834c";
+      }else if (tipoTransporte.includes("Tu")) {
+        btn.style.backgroundColor = "#9e9e9e";
+    }
+    }
+  });
+}
+
+function getCheckboxStates() {
+  const checkboxStates = {};
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+  checkboxes.forEach(function(checkbox) {
+    checkboxStates[checkbox.id] = checkbox.checked;
+  });
+  return checkboxStates;
+}
+
+function getExpressIDs(camion) {
+  const expressIDs = [];
+  precastElements.forEach(function(precastElement) {
+    if (parseInt(precastElement.Camion) === camion) {
+      expressIDs.push(precastElement.expressID);
+    }
+  });
+  return expressIDs;
+}
+
+function desactivaBtnCamion(btn,expressIDs){
+  viewer.IFC.selector.unpickIfcItems();
+  activeExpressIDs = activeExpressIDs.filter(id => !expressIDs.includes(id));
+  btn.classList.remove("active");
+  btn.style.justifyContent = "center";
+  btn.style.color = "";
+  botonesActivos--;
+}
+
+function activaBtnCamion(btn,expressIDs){
+  const btnCheckPulsado = document.querySelectorAll('.btnCheck.pulsado');
+  btnCheckPulsado.forEach(function(btn) {
+    btn.classList.remove('pulsado');
+  });
+  const piezaLabels = document.querySelectorAll('.pieza-label');
+    piezaLabels.forEach(function(label) {
+        label.style.visibility = 'hidden';
+    });
+  activeExpressIDs = activeExpressIDs.concat(expressIDs);
+  viewer.IFC.selector.unpickIfcItems();
+  btn.classList.add("active");
+  btn.style.color = "red";  
+  botonesActivos++;
+}
+
+function getCheckedArtPiezas() {
+  const checkedArtPiezas = [];
+  const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+  checkboxes.forEach(function (checkbox) {
+    if (checkbox.checked) {
+      checkedArtPiezas.push(checkbox.getAttribute('data-art-pieza'));
+    }
+  });
+  return checkedArtPiezas;
+}
+
+function expressIdPiezasCheck(checkedArtPiezas) {
+  const matchingIds = [];
+  precastElements.forEach(function (element) {
+    if (element.ART_Pieza === 0 || element.ART_Pieza === "0" || element.ART_Pieza === "" || element.ART_Pieza === undefined) {
+      return;
+    }
+    if (checkedArtPiezas.includes(element.ART_Pieza.charAt(0).toUpperCase())) {
+      matchingIds.push(element.expressID);
+    }
+  });
+  return matchingIds;
+}
+
+// Obtén referencias a los elementos relevantes
+let checkboxContainer = document.getElementById("checkbox-container");
+let divNumCamiones = document.getElementById("divNumCamiones");
+
+// Agrega un evento de escucha al contenedor con los elementos que pueden tener la clase "active"
+divNumCamiones.addEventListener("click", function() {
+  // Verifica si al menos un elemento dentro del contenedor tiene la clase "active"
+  let algunElementoActivo = [...divNumCamiones.getElementsByClassName("active")].length > 0;
+
+  // Oculta o muestra el div si algún btnCam esta active
+  if (algunElementoActivo) {
+    checkboxContainer.style.visibility = "hidden";
+  } else {
+    checkboxContainer.style.visibility = "visible";
+  }
+});
+
+
+function addEventoBotoncamion(btn, camion) {
+  btn.addEventListener("click", function() {
+    const btnEstadoPieza= document.getElementById("estadoPieza");
+    const btnEstadoActivo = btnEstadoPieza.classList.contains("active");
+    //bloque qcciones cuando se pulsa o despulsa un btn camion y no esta activo el estado de pieza
+    // if(!btnEstadoActivo){
+    //       const checkboxStates = getCheckboxStates();
+    //       const expressIDs = getExpressIDs(camion);
+
+    //       const isActiveBtnCamion = btn.classList.contains("active");
+    //       if (isActiveBtnCamion) {
+    //           desactivaBtnCamion(btn,expressIDs)
+    //           removeLabels(expressIDs);
+    //           hideAllItems(viewer, expressIDs);
+    //       } else {
+    //           activaBtnCamion(btn,expressIDs)
+    //           generateLabels(activeExpressIDs);
+    //           hideAllItems(viewer, allIDs);
+    //           showAllItems(viewer, activeExpressIDs);
+    //       }
+    //       if (botonesActivos === 0) {
+    //         ocultarLabels();
+    //         const containerFiltros= document.getElementById("checkbox-container");
+    //         containerFiltros.style.visibility="visible";
+
+    //         const checkedArtPiezas = getCheckedArtPiezas();
+
+    //         const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    //                 checkboxes.forEach(function (checkbox) {
+    //                     if (checkbox.checked) {
+    //                         checkedArtPiezas.push(checkbox.getAttribute('data-art-pieza'));
+    //                     }
+    //                 });
+    //         const matchingIds = expressIdPiezasCheck(checkedArtPiezas);
+    //         hideAllItems(viewer, idsTotal );
+    //         showAllItems(viewer, matchingIds);
+    //       } else {
+    //         const containerFiltros= document.getElementById("checkbox-container");
+    //         containerFiltros.style.visibility="hidden";
+    //       }
+          
+    //pulso boton numCamion y pulso estado de pieza
+    // } else{
+      botonesActivos++;
+      if(!btnEstadoActivo){
+        btnEstadoPieza.onclick();
+        let containerCheck= document.getElementById("checkbox-container");
+        containerCheck.style.visibility="hidden";
+      }
+      const expressIDs = getExpressIDs(camion);
+      const isActiveBtnCamion = btn.classList.contains("active");
+      if (isActiveBtnCamion) {
+          desactivaBtnCamion(btn,expressIDs)
+          removeLabels(expressIDs);
+          botonesActivos--;
+          botonesActivos--;
+          let visiblesIdsV = activeExpressIDs.filter(id => expressIDMontados.includes(id));
+          let visiblesIdsR = activeExpressIDs.filter(id => expressIDNoMontados.includes(id));
+
+          if(botonesActivos>0){
+            
+            if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0) {
+              try{
+                hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
+              }catch(error){
+                console.log(error)
+              }
+
+              try{
+                hideAllItems2(viewer, allIDs,'montaje-verde', materialVerde)
+              }catch(error){
+                console.log(error)
+              }
+              showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+              showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+            } else if (visiblesIdsV.length === 0 && visiblesIdsR.length > 0) {
+              try{
+                hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
+              }catch(error){
+                console.log(error)
+              }
+
+              try{
+                hideAllItems2(viewer, allIDs,'montaje-verde', materialVerde)
+              }catch(error){
+                console.log(error)
+              }
+
+              showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+              const items = viewer.context.items;   
+              items.ifcModels = items.ifcModels.filter(s=>s !== subsetRojo)
+              items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subsetRojo)
+            } else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+              try{
+                hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
+              }catch(error){
+                console.log(error)
+              }
+
+              try{
+                hideAllItems2(viewer, allIDs,'montaje-verde', materialVerde)
+              }catch(error){
+                console.log(error)
+              }
+                showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+            }  
+
+
+          }else{
+            let containerCheck= document.getElementById("checkbox-container");
+        containerCheck.style.visibility="visible";
+
+            showAllItems2(viewer, allIDs, 'montaje-verde', materialVerde);
+            showAllItems2(viewer, allIDs, 'montaje-rojo', materialRojo);
+            btnEstadoMontaje.onclick();
+            btnEstadoMontaje.onclick();
+          }
+      } else {
+          activaBtnCamion(btn,expressIDs);
+          generateLabels(activeExpressIDs);
+          
+          let visiblesIdsV = activeExpressIDs.filter(id => expressIDMontados.includes(id));
+          let visiblesIdsR = activeExpressIDs.filter(id => expressIDNoMontados.includes(id));
+        
+          let ocultarIdsV = expressIDMontados.filter(id => !activeExpressIDs.includes(id));
+          let ocultarIdsR = expressIDNoMontados.filter(id => !activeExpressIDs.includes(id));
+
+          console.log("visiblesIDV: "+ ocultarIdsV);
+          console.log("ocultarIdsR: "+ ocultarIdsR);
+
+          if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0) {
+            try{
+              hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
+            }catch(error){
+              console.log(error)
+            }
+
+            try{
+              hideAllItems2(viewer, allIDs,'montaje-verde', materialVerde)
+            }catch(error){
+              console.log(error)
+            }
+            showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+            showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+          } else if (ocultarIdsV.length === 0 && ocultarIdsR.length > 0) {
+            try{
+              hideAllItems2(viewer, ocultarIdsR,'montaje-rojo', materialRojo)
+            }catch(error){
+              console.log(error)
+            }
+
+          } else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+            try{
+              hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
+            }catch(error){
+              console.log(error)
+            }
+
+            try{
+              hideAllItems2(viewer, allIDs,'montaje-verde', materialVerde)
+            }catch(error){
+              console.log(error)
+            }
+              showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+          }  
+          const items = viewer.context.items;   
+          if(items){
+            items.ifcModels = items.ifcModels.filter(s=>s !== subset);
+            items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset);
+            items.ifcModels.push(subsetVerde); 
+            items.pickableIfcModels.push(subsetVerde);
+            items.ifcModels.push(subsetRojo); 
+            items.pickableIfcModels.push(subsetRojo);
+          }
+        }
+      //   document.getElementById("estadoPieza").click();
+      // document.getElementById("estadoPieza").click();
+      // }
+    
+  });
+}
+
 let botonesActivos; 
 function generaBotonesNumCamion(camionesUnicos) {
   viewer.IFC.selector.unpickIfcItems();
-
-  const btnNumCamiones = document.getElementById("divNumCamiones");
   botonesActivos = 0; // contador de botones activos
 
-  btnNumCamiones.innerHTML = ""; // limpia el div antes de generar los botones
+  const btnNumCamiones = limpiarDivNumCamiones();
   agregarBotonCero();
   camionesUnicos.sort((a, b) => a - b); // ordena los nº de camion de menor a mayor
 
-  const checkboxGroup = document.getElementsByClassName("checkbox-group");
-
-  camionesUnicos.forEach(function(camion) {
-    const btn = document.createElement("button");
-    btn.setAttribute("class", "btnNumCamion");
-    btn.textContent = camion;
-
-    precastElements.forEach(function(precastElement) {
-      if (parseInt(precastElement.Camion) === camion) {
-        const tipoTransporte = precastElement.tipoTransporte;
-        if (tipoTransporte.includes("E")) {
-          btn.style.backgroundColor = "#6d4c90";
-        } else if (tipoTransporte.includes("A")) {
-          btn.style.backgroundColor = "#4c7a90";
-        } else if (tipoTransporte.includes("C")) {
-          btn.style.backgroundColor = "#90834c";
-        }else if (tipoTransporte.includes("Tu")) {
-          btn.style.backgroundColor = "#9e9e9e";
-      }
-      }
-    });
-
-    btnNumCamiones.appendChild(btn);
-
-    btn.addEventListener("click", function() {
-      let checkboxStates = {};
-            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(function (checkbox) {
-                checkboxStates[checkbox.id] = checkbox.checked;
-            });
-      const expressIDs = [];
-      precastElements.forEach(function(precastElement) {
-        if (parseInt(precastElement.Camion) === camion) {
-          expressIDs.push(precastElement.expressID);
-        }
-      });
-
-      const isActive = btn.classList.contains("active");
-      if (isActive) {
-          viewer.IFC.selector.unpickIfcItems();
-          activeExpressIDs = activeExpressIDs.filter(id => !expressIDs.includes(id));
-          btn.classList.remove("active");
-          btn.style.justifyContent = "center";
-          btn.style.color = "";
-          botonesActivos--;
-          removeLabels(expressIDs);
-          hideAllItems(viewer, expressIDs);
-      } else {
-          const btnCheckPulsado = document.querySelectorAll('.btnCheck.pulsado');
-                btnCheckPulsado.forEach(function(btn) {
-                btn.classList.remove('pulsado');
-          });
-          const piezaLabels = document.querySelectorAll('.pieza-label');
-                piezaLabels.forEach(function(label) {
-                    label.style.visibility = 'hidden';
-                });
-          activeExpressIDs = activeExpressIDs.concat(expressIDs);
-          viewer.IFC.selector.unpickIfcItems();
-          btn.classList.add("active");
-          btn.style.color = "red";
-          botonesActivos++;
-          generateLabels(activeExpressIDs);
-          hideAllItems(viewer, allIDs);
-          showAllItems(viewer, activeExpressIDs);
-      }
-
-      
-
-      if (botonesActivos === 0) {
-        // showAllItems(viewer, allIDs);
-        ocultarLabels();
-        const containerFiltros= document.getElementById("checkbox-container");
-        containerFiltros.style.visibility="visible";
-        const checkedArtPiezas = []; 
-                checkboxes.forEach(function (checkbox) {
-                    if (checkbox.checked) {
-                        checkedArtPiezas.push(checkbox.getAttribute('data-art-pieza'));
-                    }
-                });
-                const matchingIds = []; // Almacenar los IDs de los elementos que coinciden con los checkboxes seleccionados
-                
-                precastElements.forEach(function (element) {
-                    if (element.ART_Pieza === 0 || element.ART_Pieza === "0" || element.ART_Pieza === "" || element.ART_Pieza === undefined) {
-                        return;
-                    }
-                    if (checkedArtPiezas.includes(element.ART_Pieza.charAt(0).toUpperCase())) {
-                        // if (!element.hasOwnProperty('Camion') || element.Camion === "") {
-                            matchingIds.push(element.expressID);
-                        // }
-                    }
-                });
-                hideAllItems(viewer, idsTotal );
-                showAllItems(viewer, matchingIds);
-        // enableCheckboxes();
-        // enableBtnCheckboxes();
-      } else {
-        const containerFiltros= document.getElementById("checkbox-container");
-        containerFiltros.style.visibility="hidden";
-        // disableCheckboxes();
-        // disableBtnCheckboxes();
-      }
-    });
+  camionesUnicos.forEach(function(camion) { //asigna a cada btnCamion color, eventoClic,y añade a HTML
+    const btn = crearBotonNumCamion(camion);
+    colorBtnCamion(btn,camion)
+    addEventoBotoncamion(btn, camion);
+    btnNumCamiones.appendChild(btn); 
   });
-
-  function disableCheckboxes() {
-    for (let i = 0; i < checkboxGroup.length; i++) {
-      const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
-      
-      for (let j = 0; j < checkboxes.length; j++) {
-        checkboxes[j].disabled = true;
-      }
-    }
-  }
-  function disableBtnCheckboxes() {
-      const checkboxContainer = document.getElementById('checkbox-container');
-      const buttons = checkboxContainer.querySelectorAll('.checkbox-button-container button');
-
-      buttons.forEach((button) => {
-          button.disabled = true;
-      });
-  }
-  function enableCheckboxes() {
-    for (let i = 0; i < checkboxGroup.length; i++) {
-      const checkboxes = checkboxGroup[i].querySelectorAll('input[type="checkbox"]');
-      
-      for (let j = 0; j < checkboxes.length; j++) {
-        checkboxes[j].disabled = false;
-      }
-    }
-    
-  }
-  function enableBtnCheckboxes() {
-    const checkboxContainer = document.getElementById('checkbox-container');
-    const buttons = checkboxContainer.querySelectorAll('.checkbox-button-container button');
-
-    buttons.forEach((button) => {
-        button.disabled = false;
-    });
-    
-  }
 }
 
 let activeExpressIDs = [];
@@ -1482,6 +1671,7 @@ function showAllItems(viewer, ids) {
 		customID: 'full-model-subset',
 	});
 }
+
 function showAllItems2(viewer, ids, customID, material) {
   // viewer.IFC.loader.ifcManager.clearSubset(
   //   model[0],
