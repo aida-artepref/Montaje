@@ -213,7 +213,6 @@ let subset;
 
 async function loadModel(url) {
   model = await viewer.IFC.loadIfcUrl(url);
-  //console.log(model);
   getPlantas(model);
   createPrecastElementsArray(model.modelID).then((precastElements) => {
     cargaGlobalIdenPrecast(precastElements);
@@ -270,7 +269,6 @@ function creaBoxHelper(){
   scene.add(sphere);
 
 }
-
 
 function findNodeWithExpressID(node, expressID) {
   if (node.expressID === expressID) {
@@ -568,7 +566,6 @@ function getWholeSubset(viewer, model, allIDs) {
 	});
 }
 
-
 const materialRojo = new MeshLambertMaterial({
   transparent: true,
   opacity: 0.5,
@@ -625,8 +622,6 @@ function getWholeSubsetColorRojo(viewer, model, expressIDNoMontados) {
 	});
 }
 
-
-
 function replaceOriginalModelBySubset(viewer, model, subset) {
 	const items = viewer.context.items;  //obtiene el objeto "items" del contexto del visor y lo almacena en una variable local.
 	items.pickableIfcModels = items.pickableIfcModels.filter(model => model !== model);  //Filtra las matrices y elimina cualquier referencia al modelo original
@@ -645,25 +640,7 @@ function replaceOriginalBySubset(viewer) {
   // items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
 }
 
-function verificarBotonesActivos() {
-  let divNumCamiones = document.getElementById("divNumCamiones");
-  let btnsNumCam = divNumCamiones.getElementsByClassName("btnNumCamion");
-
-  let algunBotonActivoCam = false;
-
-  for (let i = 0; i < btnsNumCam.length; i++) {
-    if (btnsNumCam[i].classList.contains("active")) {
-      algunBotonActivoCam = true;
-      break; // Puedes detener la iteración si encuentras al menos uno
-    }
-  }
-
-  return algunBotonActivoCam;
-}
-
-
-
-
+//TODO: onclick
 container.onclick = async () => {
   const found = await viewer.IFC.selector.pickIfcItem(false);
 
@@ -675,10 +652,9 @@ container.onclick = async () => {
   }
 
 
-  let algunBotonActivoCam=verificarBotonesActivos() ;
 
-  if (btnEstadoMontaje.classList.contains('active') && !algunBotonActivoCam) {
-  
+  if (btnEstadoMontaje.classList.contains('active')) {
+    viewer.IFC.selector.unpickIfcItems();
     if (found && found.id) {
       console.log("existe foundID"+found.id);
       if (expressIDMontados.includes(found.id)) {
@@ -687,7 +663,6 @@ container.onclick = async () => {
           expressIDMontados.splice(indexToRemove, 1);
         }
         expressIDNoMontados.push(found.id);
-
       } else if (expressIDNoMontados.includes(found.id)) {
         const indexToRemove = expressIDNoMontados.indexOf(found.id);
         if (indexToRemove !== -1) {
@@ -695,6 +670,81 @@ container.onclick = async () => {
         }
         expressIDMontados.push(found.id);
       }
+
+      let btnCamActivoNumero = [];
+        var camActivos = document.querySelectorAll('.btnNumCamion');
+
+        // Iterar a través de los botonesCamiones activos y obtiene 
+        camActivos.forEach(function(camActivo) {
+            // Verificar si el elemento tiene la clase "active"
+            if (camActivo.classList.contains('active')) {
+              btnCamActivoNumero.push(parseInt(camActivo.textContent));
+            }
+        });
+        console.log(btnCamActivoNumero);
+
+        if(btnCamActivoNumero.length>0){
+          const expressIDsCamActivo = [];
+          for (var i = 0; i < precastElements.length; i++) {
+            if (btnCamActivoNumero.includes(precastElements[i].Camion))  {
+                expressIDsCamActivo.push(precastElements[i].expressID);
+            }
+          }
+          console.log("Express de los camiones activos"+expressIDsCamActivo)
+
+          let visiblesIdsV = expressIDsCamActivo.filter(id => expressIDMontados.includes(id));
+          let visiblesIdsR = expressIDsCamActivo.filter(id => expressIDNoMontados.includes(id));
+          console.log("VISIBLES EN ROJO: "+visiblesIdsR)
+          console.log("VISIBLES EN VERDE: "+visiblesIdsV)
+          
+        if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0 ) {
+          try{
+            hideAllItems2(viewer, expressIDsCamActivo, 'montaje-verde', materialVerde);
+          } catch(error){
+            console.log(error)
+          }
+          try{
+            hideAllItems2(viewer, expressIDsCamActivo, 'montaje-rojo', materialRojo);
+          }catch(error){
+            console.log(error)
+          }
+        }else if (visiblesIdsV.length === 0 && visiblesIdsR.length > 0) {
+          
+          try{
+            hideAllItems2(viewer, expressIDsCamActivo, 'montaje-rojo', materialRojo);
+          } catch(error){
+            console.log(error)
+          }
+        }else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+          try{
+            hideAllItems2(viewer, expressIDsCamActivo, 'montaje-verde', materialVerde);
+          }catch(error){
+            console.log(error)
+          }
+        }
+        
+          subsetVerde=getWholeSubsetColorVerde(viewer, model, visiblesIdsV);
+          replaceOriginalBySubset(viewer);
+          subsetRojo=getWholeSubsetColorRojo(viewer, model, visiblesIdsR);
+          replaceOriginalBySubset(viewer);
+          items = viewer.context.items;   
+          if(items){
+            if(subset){
+              items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+              items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset) 
+            }
+            if(subsetVerde){
+              items.ifcModels.push(subsetVerde); 
+              items.pickableIfcModels.push(subsetVerde);
+            }
+            if(subsetRojo){
+              items.ifcModels.push(subsetRojo); 
+              items.pickableIfcModels.push(subsetRojo);
+            }
+          }
+          return;
+        }
+        
     }
     
     document.getElementById("estadoPieza").click();
@@ -745,7 +795,6 @@ function muestraPropiedades(ART_Pieza, ART_Longitud, ART_Peso) {
   propiedadesContainer.appendChild(propiedadesDiv);
 }
 
-
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 const propButton = document.getElementById('btn-lateral-propiedades');
 let propActive= false;
@@ -790,8 +839,7 @@ propButton.onclick= () => {
 }
 
 let numBusquedas = 0;
-let expressIDsInput;
-//let modelCopy = null; 
+let expressIDsInput; 
 let listaElementosEncontrados = null;
 
 inputText.addEventListener('change', function() {
@@ -860,6 +908,7 @@ function modelCopyCompletoFunction(){
 modelCopyCompleto = new Mesh(model.geometry, materialSolid);
         scene.add(modelCopyCompleto);
 }
+
 // Seccion button - corte
 const cutButton = document.getElementById('btn-lateral-seccion');
 let cutActive = false;
@@ -898,9 +947,7 @@ container.addEventListener("mousedown", async () => {
   }
 });
 
-
 function creaPlano(){
-
   viewer.clipper.createPlane();
           const ifcPlane = viewer.clipper.planes[viewer.clipper.planes.length - 1];
     
@@ -974,7 +1021,6 @@ floorplanButton.onclick = () => {
 // Muestra el ifc COmpleto
 const ifcCompletoButton = document.getElementById('btn-ifc-completo');
 let ifcCompletoActive = false;
-
 ifcCompletoButton.onclick = () => {
   ifcCompletoActive=!ifcCompletoActive;
   if (ifcCompletoActive) {
@@ -986,9 +1032,7 @@ ifcCompletoButton.onclick = () => {
   }
 };
 
-
 let expressIDMontados=[];
-
 let btnEstadoMontaje = document.getElementById('estadoPieza');
 let subsetRojo=null;
 let subsetVerde=null;
@@ -997,7 +1041,7 @@ btnEstadoMontaje.onclick=async()=>{
   btnEstadoMontaje.classList.toggle('active');
   viewer.IFC.selector.unpickIfcItems();
 
-  // compruebamos el estado de los checkboxes
+  // comprueba el estado de los checkboxes
   const checkboxes = document.querySelectorAll('input[type="checkbox"]');
   const checkedArtPiezas = [];
 
@@ -1009,22 +1053,21 @@ btnEstadoMontaje.onclick=async()=>{
       checkedArtPiezas.push(artPieza);
     }
   }
-console.log(checkedArtPiezas+" CHECKEADOS")
-const elVisiblesCheck = [];
+  console.log(checkedArtPiezas+" CHECKEADOS")
 
-for (let i = 0; i < precastElements.length; i++) {
-  const elemento = precastElements[i];
+  const elVisiblesCheck = [];
+  for (let i = 0; i < precastElements.length; i++) {
+    const elemento = precastElements[i];
 
-  // Obtiene la primera letra de ART_Pieza
-  const primeraLetra = elemento.ART_Pieza.charAt(0);
+    // Obtiene la primera letra de ART_Pieza
+    const primeraLetra = elemento.ART_Pieza.charAt(0);
 
-  // Comprueba si la primera letra de ART_Pieza está en checkedArtPiezas
-  if (checkedArtPiezas.includes(primeraLetra)) {
-    elVisiblesCheck.push(elemento.expressID);
+    // Comprueba si la primera letra de ART_Pieza está en checkedArtPiezas
+    if (checkedArtPiezas.includes(primeraLetra)) {
+      elVisiblesCheck.push(elemento.expressID);
+    }
   }
-}
-console.log("ID DE ELEMENTOS CHECK: "+elVisiblesCheck);
-
+  console.log("ID DE ELEMENTOS CHECK: "+elVisiblesCheck);
 
   if (btnEstadoMontaje.classList.contains('active' )) {
     const elVisiCheckMontados = elVisiblesCheck.filter((element) =>
@@ -1034,9 +1077,6 @@ console.log("ID DE ELEMENTOS CHECK: "+elVisiblesCheck);
     const elVisiCheckNoMontados = elVisiblesCheck.filter((element) =>
       expressIDNoMontados.includes(element)
     );
-
-    
-
 
     if(subset){
      // activaCheck();
@@ -1070,6 +1110,77 @@ console.log("ID DE ELEMENTOS CHECK: "+elVisiblesCheck);
     replaceOriginalModelBySubset(viewer, model, subset);
     hideAllItems(viewer,allIDs)
     showAllItems(viewer, elVisiblesCheck)
+  }
+
+  
+    // Obtén el elemento con el ID divNumCamiones
+  const divNumCamiones = document.getElementById('divNumCamiones');
+
+  // Obtén todos los elementos con la clase 'active' dentro de divNumCamiones
+  const btnCamionActivos = divNumCamiones.querySelectorAll('.active');
+
+  // Recorre los elementos activos y recoge su texto
+  const textosCamionesActivos = [];
+  btnCamionActivos.forEach((elemento) => {
+    textosCamionesActivos.push(parseInt(elemento.textContent));
+  });
+  console.log("LOS BOTONES ACTIVOS DE LOS CAMIONES: "+textosCamionesActivos);
+  const expressIDsCaminonesActivos = [];
+  if(textosCamionesActivos.length>0){ 
+    precastElements.forEach(function(precastElement) {
+      if (textosCamionesActivos.includes(parseInt(precastElement.Camion))) {
+        expressIDsCaminonesActivos.push(precastElement.expressID);
+      }
+    });
+    let visiblesIdsV = expressIDsCaminonesActivos.filter(id => expressIDMontados.includes(id));
+          let visiblesIdsR = expressIDsCaminonesActivos.filter(id => expressIDNoMontados.includes(id));
+
+          let activeExpressIDsR = activeExpressIDs.filter(id => expressIDNoMontados.includes(id));
+          let activeExpressIDsV = activeExpressIDs.filter(id => expressIDMontados.includes(id));
+
+          if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0 ) {
+            try{
+              hideAllItems2(viewer, expressIDs, 'montaje-verde', materialVerde);
+            } catch(error){
+              console.log(error)
+            }
+            try{
+              hideAllItems2(viewer, expressIDs, 'montaje-rojo', materialRojo);
+            }catch(error){
+              console.log(error)
+            }
+          }else if (visiblesIdsV.length === 0 && visiblesIdsR.length > 0) {
+            
+            try{
+              hideAllItems2(viewer, expressIDs, 'montaje-rojo', materialRojo);
+            } catch(error){
+              console.log(error)
+            }
+          }else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+            try{
+              hideAllItems2(viewer, expressIDs, 'montaje-verde', materialVerde);
+            }catch(error){
+              console.log(error)
+            }
+          }
+
+
+          
+          console.log("Creando subconjuntoRojo: " +visiblesIdsV, visiblesIdsV.length);
+            console.log("Creando subconjuntoVerde: " +visiblesIdsR, visiblesIdsR.length);
+            subsetVerde=getWholeSubsetColorVerde(viewer, model, activeExpressIDsV);
+            replaceOriginalBySubset(viewer);
+            subsetRojo=getWholeSubsetColorRojo(viewer, model, activeExpressIDsR);
+            replaceOriginalBySubset(viewer);
+          items = viewer.context.items;   
+          if(items){
+            items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+            items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+            items.ifcModels.push(subsetVerde); 
+            items.pickableIfcModels.push(subsetVerde);
+            items.ifcModels.push(subsetRojo); 
+            items.pickableIfcModels.push(subsetRojo);
+          }
   }
 };
 
@@ -1115,8 +1226,6 @@ function muestraNombrePieza(ART_Pieza, ART_CoordX, ART_CoordY, ART_CoordZ, expre
         labelObject.position.set(adjustedX, adjustedZ, adjustedY); // Ajustar coordenadas Y debido a la conversión de ejes
         
         console.log("Coordenadas ajustadas:", adjustedX, adjustedY, adjustedZ);
-        // console.log(labelObject.scale);
-        // console.log(labelObject.rotation);
         scene.add(labelObject);
     }
   }
@@ -1194,6 +1303,8 @@ function removeLabels(expressIDs) {
   }
 }
 
+
+//TODO CHECKBOXES
 const checkboxStates = {};
 function addCheckboxListeners(precastElements, viewer) {
   const checkboxes = document.querySelectorAll('input[type="checkbox"]');
@@ -1213,7 +1324,7 @@ function addCheckboxListeners(precastElements, viewer) {
           visibleIds.push(el.expressID);
         }
       });
-      console.log(visibleIds);
+      console.log("Elementos visibles en el check: "+visibleIds);
       if (isChecked) {
         
           if (document.getElementById("estadoPieza").classList.contains("active")) {
@@ -1271,15 +1382,15 @@ function addCheckboxListeners(precastElements, viewer) {
               console.log(error)
             }
           }
-          const items = viewer.context.items;   
-          if(items){
-            items.ifcModels = items.ifcModels.filter(s=>s !== subset)
-            items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
-            items.ifcModels.push(subsetVerde); 
-            items.pickableIfcModels.push(subsetVerde);
-            items.ifcModels.push(subsetRojo); 
-            items.pickableIfcModels.push(subsetRojo);
-          }
+          // const items = viewer.context.items;   
+          // if(items){
+          //   items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+          //   items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
+          //   items.ifcModels.push(subsetVerde); 
+          //   items.pickableIfcModels.push(subsetVerde);
+          //   items.ifcModels.push(subsetRojo); 
+          //   items.pickableIfcModels.push(subsetRojo);
+          // }
           removeLabels(visibleIds);
           const button = document.querySelector(`.btnCheck[data-art-pieza="${artPieza}"]`);
           if (button && button.classList.contains('pulsado')) {
@@ -1288,8 +1399,8 @@ function addCheckboxListeners(precastElements, viewer) {
           }
         }
       }
-      // document.getElementById("estadoPieza").click();
-      // document.getElementById("estadoPieza").click();
+      document.getElementById("estadoPieza").click();
+      document.getElementById("estadoPieza").click();
     });
   }
 }
@@ -1314,185 +1425,83 @@ async function generateLabels(expressIDs) {
   
 }
 
+let botonesActivos; 
+function generaBotonesNumCamion(camionesUnicos) {
+  viewer.IFC.selector.unpickIfcItems();
 
-function limpiarDivNumCamiones() {
   const btnNumCamiones = document.getElementById("divNumCamiones");
-  btnNumCamiones.innerHTML = "";
-  return btnNumCamiones;
-}
+  botonesActivos = 0; // contador de botones activos
 
-function crearBotonNumCamion(camion) {
-  const btn = document.createElement("button");
-  btn.setAttribute("class", "btnNumCamion");
-  btn.textContent = camion;
-  return btn;
-}
+  btnNumCamiones.innerHTML = ""; // limpia el div antes de generar los botones
+  agregarBotonCero();
+  camionesUnicos.sort((a, b) => a - b); // ordena los nº de camion de menor a mayor
 
-function colorBtnCamion(btn,camion){
-  precastElements.forEach(function(precastElement) {
-    if (parseInt(precastElement.Camion) === camion) {
-      const tipoTransporte = precastElement.tipoTransporte;
-      if (tipoTransporte.includes("E")) {
-        btn.style.backgroundColor = "#6d4c90";
-      } else if (tipoTransporte.includes("A")) {
-        btn.style.backgroundColor = "#4c7a90";
-      } else if (tipoTransporte.includes("C")) {
-        btn.style.backgroundColor = "#90834c";
-      }else if (tipoTransporte.includes("Tu")) {
-        btn.style.backgroundColor = "#9e9e9e";
-    }
-    }
-  });
-}
+  const checkboxGroup = document.getElementsByClassName("checkbox-group");
 
-function getCheckboxStates() {
-  const checkboxStates = {};
-  const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-  checkboxes.forEach(function(checkbox) {
-    checkboxStates[checkbox.id] = checkbox.checked;
-  });
-  return checkboxStates;
-}
+  camionesUnicos.forEach(function(camion) {
+    const btn = document.createElement("button");
+    btn.setAttribute("class", "btnNumCamion");
+    btn.textContent = camion;
 
-function getExpressIDs(camion) {
-  const expressIDs = [];
-  precastElements.forEach(function(precastElement) {
-    if (parseInt(precastElement.Camion) === camion) {
-      expressIDs.push(precastElement.expressID);
-    }
-  });
-  return expressIDs;
-}
-
-function desactivaBtnCamion(btn,expressIDs){
-  viewer.IFC.selector.unpickIfcItems();
-  activeExpressIDs = activeExpressIDs.filter(id => !expressIDs.includes(id));
-  btn.classList.remove("active");
-  btn.style.justifyContent = "center";
-  btn.style.color = "";
-  botonesActivos--;
-}
-
-function activaBtnCamion(btn,expressIDs){
-  const btnCheckPulsado = document.querySelectorAll('.btnCheck.pulsado');
-  btnCheckPulsado.forEach(function(btn) {
-    btn.classList.remove('pulsado');
-  });
-  const piezaLabels = document.querySelectorAll('.pieza-label');
-    piezaLabels.forEach(function(label) {
-        label.style.visibility = 'hidden';
+    precastElements.forEach(function(precastElement) {
+      if (parseInt(precastElement.Camion) === camion) {
+        const tipoTransporte = precastElement.tipoTransporte;
+        if (tipoTransporte.includes("E")) {
+          btn.style.backgroundColor = "#6d4c90";
+        } else if (tipoTransporte.includes("A")) {
+          btn.style.backgroundColor = "#4c7a90";
+        } else if (tipoTransporte.includes("C")) {
+          btn.style.backgroundColor = "#90834c";
+        }else if (tipoTransporte.includes("Tu")) {
+          btn.style.backgroundColor = "#9e9e9e";
+      }
+      }
     });
-  activeExpressIDs = activeExpressIDs.concat(expressIDs);
-  viewer.IFC.selector.unpickIfcItems();
-  btn.classList.add("active");
-  btn.style.color = "red";  
-  botonesActivos++;
-}
 
-function getCheckedArtPiezas() {
-  const checkedArtPiezas = [];
-  const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-  checkboxes.forEach(function (checkbox) {
-    if (checkbox.checked) {
-      checkedArtPiezas.push(checkbox.getAttribute('data-art-pieza'));
-    }
-  });
-  return checkedArtPiezas;
-}
+    btnNumCamiones.appendChild(btn);
 
-function expressIdPiezasCheck(checkedArtPiezas) {
-  const matchingIds = [];
-  precastElements.forEach(function (element) {
-    if (element.ART_Pieza === 0 || element.ART_Pieza === "0" || element.ART_Pieza === "" || element.ART_Pieza === undefined) {
-      return;
-    }
-    if (checkedArtPiezas.includes(element.ART_Pieza.charAt(0).toUpperCase())) {
-      matchingIds.push(element.expressID);
-    }
-  });
-  return matchingIds;
-}
+    //TODO: Boton Camion
+    btn.addEventListener("click", function() {
 
-// Obtén referencias a los elementos relevantes
-let checkboxContainer = document.getElementById("checkbox-container");
-let divNumCamiones = document.getElementById("divNumCamiones");
-
-// Agrega un evento de escucha al contenedor con los elementos que pueden tener la clase "active"
-divNumCamiones.addEventListener("click", function() {
-  // Verifica si al menos un elemento dentro del contenedor tiene la clase "active"
-  let algunElementoActivo = [...divNumCamiones.getElementsByClassName("active")].length > 0;
-
-  // Oculta o muestra el div si algún btnCam esta active
-  if (algunElementoActivo) {
-    checkboxContainer.style.visibility = "hidden";
-  } else {
-    checkboxContainer.style.visibility = "visible";
-  }
-});
-
-
-function addEventoBotoncamion(btn, camion) {
-  btn.addEventListener("click", function() {
-    const btnEstadoPieza= document.getElementById("estadoPieza");
-    const btnEstadoActivo = btnEstadoPieza.classList.contains("active");
-    //bloque qcciones cuando se pulsa o despulsa un btn camion y no esta activo el estado de pieza
-    // if(!btnEstadoActivo){
-    //       const checkboxStates = getCheckboxStates();
-    //       const expressIDs = getExpressIDs(camion);
-
-    //       const isActiveBtnCamion = btn.classList.contains("active");
-    //       if (isActiveBtnCamion) {
-    //           desactivaBtnCamion(btn,expressIDs)
-    //           removeLabels(expressIDs);
-    //           hideAllItems(viewer, expressIDs);
-    //       } else {
-    //           activaBtnCamion(btn,expressIDs)
-    //           generateLabels(activeExpressIDs);
-    //           hideAllItems(viewer, allIDs);
-    //           showAllItems(viewer, activeExpressIDs);
-    //       }
-    //       if (botonesActivos === 0) {
-    //         ocultarLabels();
-    //         const containerFiltros= document.getElementById("checkbox-container");
-    //         containerFiltros.style.visibility="visible";
-
-    //         const checkedArtPiezas = getCheckedArtPiezas();
-
-    //         const checkboxes = document.querySelectorAll('input[type="checkbox"]');
-    //                 checkboxes.forEach(function (checkbox) {
-    //                     if (checkbox.checked) {
-    //                         checkedArtPiezas.push(checkbox.getAttribute('data-art-pieza'));
-    //                     }
-    //                 });
-    //         const matchingIds = expressIdPiezasCheck(checkedArtPiezas);
-    //         hideAllItems(viewer, idsTotal );
-    //         showAllItems(viewer, matchingIds);
-    //       } else {
-    //         const containerFiltros= document.getElementById("checkbox-container");
-    //         containerFiltros.style.visibility="hidden";
-    //       }
-          
-    //pulso boton numCamion y pulso estado de pieza
-    // } else{
-      botonesActivos++;
+      const btnEstadoPieza= document.getElementById("estadoPieza");
+      const btnEstadoActivo = btnEstadoPieza.classList.contains("active");
+      
       if(!btnEstadoActivo){
         btnEstadoPieza.onclick();
         let containerCheck= document.getElementById("checkbox-container");
         containerCheck.style.visibility="hidden";
       }
-      const expressIDs = getExpressIDs(camion);
-      const isActiveBtnCamion = btn.classList.contains("active");
-      if (isActiveBtnCamion) {
-          desactivaBtnCamion(btn,expressIDs)
+
+      //almacena el estado de los check en el momento de pulsar un botonNumCamion
+      let checkboxStates = {};
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(function (checkbox) {
+                checkboxStates[checkbox.id] = checkbox.checked;
+            });
+      const expressIDs = [];
+      //si el btnNumCamion es pulsado, los expressID que tengan ese numCamion se añaden a expressID
+      precastElements.forEach(function(precastElement) {
+        if (parseInt(precastElement.Camion) === camion) {
+          expressIDs.push(precastElement.expressID);
+        }
+      });
+      //let items;
+      const isActive = btn.classList.contains("active");
+      //si btnNumCamion esta activo, borde rojo
+      if (isActive) {
+          viewer.IFC.selector.unpickIfcItems();
+          activeExpressIDs = activeExpressIDs.filter(id => !expressIDs.includes(id));
+          btn.classList.remove("active");
+          btn.style.justifyContent = "center";
+          btn.style.color = "";
+          botonesActivos--;
           removeLabels(expressIDs);
-          botonesActivos--;
-          botonesActivos--;
+     
           let visiblesIdsV = activeExpressIDs.filter(id => expressIDMontados.includes(id));
           let visiblesIdsR = activeExpressIDs.filter(id => expressIDNoMontados.includes(id));
-
-          if(botonesActivos>0){
             
             if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0) {
+
               try{
                 hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
               }catch(error){
@@ -1506,7 +1515,9 @@ function addEventoBotoncamion(btn, camion) {
               }
               showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
               showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+
             } else if (visiblesIdsV.length === 0 && visiblesIdsR.length > 0) {
+
               try{
                 hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
               }catch(error){
@@ -1519,11 +1530,10 @@ function addEventoBotoncamion(btn, camion) {
                 console.log(error)
               }
 
-              showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
-              const items = viewer.context.items;   
-              items.ifcModels = items.ifcModels.filter(s=>s !== subsetRojo)
-              items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subsetRojo)
+                showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+                
             } else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
+                
               try{
                 hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
               }catch(error){
@@ -1537,96 +1547,128 @@ function addEventoBotoncamion(btn, camion) {
               }
                 showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
             }  
-
-
-          }else{
-            let containerCheck= document.getElementById("checkbox-container");
-        containerCheck.style.visibility="visible";
-
-            showAllItems2(viewer, allIDs, 'montaje-verde', materialVerde);
-            showAllItems2(viewer, allIDs, 'montaje-rojo', materialRojo);
-            btnEstadoMontaje.onclick();
-            btnEstadoMontaje.onclick();
-          }
+        //si btnNumCamion se pulsa y no esta activo, borde rojo
       } else {
-          activaBtnCamion(btn,expressIDs);
-          generateLabels(activeExpressIDs);
+          botonesActivos++;
+          const btnCheckPulsado = document.querySelectorAll('.btnCheck.pulsado');
+                btnCheckPulsado.forEach(function(btn) {
+                btn.classList.remove('pulsado');
+          });
+          const piezaLabels = document.querySelectorAll('.pieza-label');
+                piezaLabels.forEach(function(label) {
+                    label.style.visibility = 'hidden';
+                });
+          let btnEstadoPieza=document.getElementById("estadoPieza");     
+          activeExpressIDs = activeExpressIDs.concat(expressIDs);
+          viewer.IFC.selector.unpickIfcItems();
+          btn.classList.add("active");
+          btn.style.color = "red";
           
-          let visiblesIdsV = activeExpressIDs.filter(id => expressIDMontados.includes(id));
-          let visiblesIdsR = activeExpressIDs.filter(id => expressIDNoMontados.includes(id));
-        
-          let ocultarIdsV = expressIDMontados.filter(id => !activeExpressIDs.includes(id));
-          let ocultarIdsR = expressIDNoMontados.filter(id => !activeExpressIDs.includes(id));
+          generateLabels(activeExpressIDs);  
+          if(!btnEstadoPieza.classList.contains('active')){
+            hideAllItems(viewer, allIDs);
+            showAllItems(viewer, activeExpressIDs);
+          } 
+          else{  // el btnNum esta pulsado y el btnEstadoPieza tambien
+            const elVisiCheckMontados = activeExpressIDs.filter((element) =>
+            expressIDMontados.includes(element)
+            ); //Array con elementos visibles + Montados = visibles son los que pertenecen a un tipo y coinciden con los Montados, 
 
-          console.log("visiblesIDV: "+ ocultarIdsV);
-          console.log("ocultarIdsR: "+ ocultarIdsR);
-
-          if (visiblesIdsV.length > 0 && visiblesIdsR.length > 0) {
-            try{
-              hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
-            }catch(error){
-              console.log(error)
+            const elVisiCheckNoMontados = activeExpressIDs.filter((element) =>
+              expressIDNoMontados.includes(element)
+            );
+            if(subset){
+                subset.removeFromParent();
+                const items = viewer.context.items;   
+                items.ifcModels = items.ifcModels.filter(s=>s !== subset)
+                items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
             }
-
-            try{
-              hideAllItems2(viewer, allIDs,'montaje-verde', materialVerde)
-            }catch(error){
-              console.log(error)
+            if(subsetRojo){
+              subsetRojo.removeFromParent();
+              const items = viewer.context.items;   
+              items.ifcModels = items.ifcModels.filter(s=>s !== subsetRojo)
+              items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subsetRojo)
+            }  
+            if(subsetVerde){
+              subsetVerde.removeFromParent();
+              const items = viewer.context.items;   
+              items.ifcModels = items.ifcModels.filter(s=>s !== subsetVerde)
+              items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subsetVerde)
             }
-            showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
-            showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
-          } else if (ocultarIdsV.length === 0 && ocultarIdsR.length > 0) {
-            try{
-              hideAllItems2(viewer, ocultarIdsR,'montaje-rojo', materialRojo)
-            }catch(error){
-              console.log(error)
-            }
-
-          } else if (visiblesIdsV.length > 0 && visiblesIdsR.length === 0) {
-            try{
-              hideAllItems2(viewer, allIDs,'montaje-rojo', materialRojo)
-            }catch(error){
-              console.log(error)
-            }
-
-            try{
-              hideAllItems2(viewer, allIDs,'montaje-verde', materialVerde)
-            }catch(error){
-              console.log(error)
-            }
-              showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
-          }  
-          const items = viewer.context.items;   
-          if(items){
-            items.ifcModels = items.ifcModels.filter(s=>s !== subset);
-            items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset);
-            items.ifcModels.push(subsetVerde); 
-            items.pickableIfcModels.push(subsetVerde);
-            items.ifcModels.push(subsetRojo); 
-            items.pickableIfcModels.push(subsetRojo);
+            
+          console.log("Creando subconjuntoRojo: " +elVisiCheckNoMontados, elVisiCheckMontados.length);
+          console.log("Creando subconjuntoVerde: " +elVisiCheckMontados, elVisiCheckMontados.length);
+          subsetVerde=getWholeSubsetColorVerde(viewer, model, elVisiCheckMontados);
+          replaceOriginalBySubset(viewer);
+          subsetRojo=getWholeSubsetColorRojo(viewer, model, elVisiCheckNoMontados);
+          replaceOriginalBySubset(viewer);
+            
           }
+      }
+
+      
+
+      if (botonesActivos === 0) {
+        // showAllItems(viewer, allIDs);
+        ocultarLabels();
+        const estadoPieza = document.getElementById("estadoPieza");
+        if (!estadoPieza.classList.contains("active")) {
+            const containerFiltros= document.getElementById("checkbox-container");
+            containerFiltros.style.visibility="visible";
+            const checkedArtPiezas = []; 
+            checkboxes.forEach(function (checkbox) {
+                if (checkbox.checked) {
+                      checkedArtPiezas.push(checkbox.getAttribute('data-art-pieza'));
+                }
+            });
+            const matchingIds = []; // Almacenar los IDs de los elementos que coinciden con los checkboxes seleccionados
+                    
+            precastElements.forEach(function (element) {
+                if (element.ART_Pieza === 0 || element.ART_Pieza === "0" || element.ART_Pieza === "" || element.ART_Pieza === undefined) {
+                  return;
+                }
+                if (checkedArtPiezas.includes(element.ART_Pieza.charAt(0).toUpperCase())) {
+                    matchingIds.push(element.expressID);                        
+                }
+            });
+            hideAllItems(viewer, idsTotal );
+            showAllItems(viewer, matchingIds);
         }
-      //   document.getElementById("estadoPieza").click();
-      // document.getElementById("estadoPieza").click();
-      // }
-    
-  });
-}
-
-let botonesActivos; 
-function generaBotonesNumCamion(camionesUnicos) {
-  viewer.IFC.selector.unpickIfcItems();
-  botonesActivos = 0; // contador de botones activos
-
-  const btnNumCamiones = limpiarDivNumCamiones();
-  agregarBotonCero();
-  camionesUnicos.sort((a, b) => a - b); // ordena los nº de camion de menor a mayor
-
-  camionesUnicos.forEach(function(camion) { //asigna a cada btnCamion color, eventoClic,y añade a HTML
-    const btn = crearBotonNumCamion(camion);
-    colorBtnCamion(btn,camion)
-    addEventoBotoncamion(btn, camion);
-    btnNumCamiones.appendChild(btn); 
+        else{
+          const containerFiltros= document.getElementById("checkbox-container");
+          containerFiltros.style.visibility="visible";
+          let visiblesIdsV = expressIDs.filter(id => expressIDMontados.includes(id));
+          let visiblesIdsR = expressIDs.filter(id => expressIDNoMontados.includes(id));
+          try{
+            hideAllItems2(viewer, expressIDs, 'montaje-rojo', materialRojo);
+          } catch(error){
+            console.log(error)
+          }
+          try{
+          hideAllItems2(viewer, expressIDs, 'montaje-verde', materialVerde);
+          } catch(error){
+            console.log(error)
+          }
+          try{
+            showAllItems2(viewer, visiblesIdsR, 'montaje-rojo', materialRojo);
+          } catch(error){
+            console.log(error)
+          }
+          try{
+            showAllItems2(viewer, visiblesIdsV, 'montaje-verde', materialVerde);
+          } catch(error){
+            console.log(error)
+          }
+          document.getElementById("estadoPieza").click();
+          document.getElementById("estadoPieza").click();
+        }
+        
+      } else {
+        const containerFiltros= document.getElementById("checkbox-container");
+        containerFiltros.style.visibility="hidden";
+        
+      }
+    });
   });
 }
 
@@ -1642,7 +1684,6 @@ function obtenerValorCamion(precastElements) {
   });
   return Array.from(valoresCamion);
 }
-
 
 function hideAllItems(viewer, ids) {
   viewer.IFC.loader.ifcManager.removeFromSubset(
@@ -1661,7 +1702,6 @@ function hideAllItems2(viewer, ids, customID, material) {
   );
 }
 
-
 function showAllItems(viewer, ids) {
 	viewer.IFC.loader.ifcManager.createSubset({
 		modelID: 0,
@@ -1673,11 +1713,6 @@ function showAllItems(viewer, ids) {
 }
 
 function showAllItems2(viewer, ids, customID, material) {
-  // viewer.IFC.loader.ifcManager.clearSubset(
-  //   model[0],
-  //   customID,
-  //   material,
-  // );
 	viewer.IFC.loader.ifcManager.createSubset({
 		modelID: 0,
 		ids,
@@ -1721,19 +1756,15 @@ function agregarBotonCero() {
               boton.style.border = '1px solid white';
               boton.style.color="white";
           });
-          //document.getElementById("datosCamiones").innerHTML = "";
-          //document.getElementById("posicionCamion").innerHTML = "";
           btnCero.classList.add("active");
           btnCero.style.justifyContent = "center";
-          
           showElementsByCamion(viewer, precastElements);
-
       }
   });
 }
 
 function showElementsByCamion(viewer, precastElements) {
-  // Crear el div y el label
+  // Crear el div y label
   activeExpressIDs = [];
   botonesActivos=0;
   const label = document.createElement("label");
