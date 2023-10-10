@@ -284,7 +284,7 @@ function findNodeWithExpressID(node, expressID) {
 
   return null;
 }
-
+let elementsArray = [];
 async function getPlantas(model) {
   await viewer.plans.computeAllPlanViews(model.modelID);
 
@@ -296,7 +296,7 @@ async function getPlantas(model) {
   });
 
   viewer.edges.create('example', model.modelID, lineMaterial, baseMaterial);
-
+  
   const containerForPlans = document.getElementById('button-container');
   const buttonGroup = document.createElement('div'); // nuevo div para agrupar botones
   containerForPlans.appendChild(buttonGroup);
@@ -335,72 +335,110 @@ async function getPlantas(model) {
     btn2DPlantas.style.marginLeft = '5px'; 
     btn2DPlantas.style.visibility = 'hidden';
     btn2DPlantas.classList.add('btn2DPlanta');
-    const elementsArray = [];
+    //const elementsArray = [];
 
     button.onclick = async () => {
-      ocultarLabels()
+      ocultarLabels();
+      viewer.IFC.selector.unpickIfcItems();
       const expressIDplanta = parseInt(button.dataset.expressId);
-      console.log("ExpressId: "+expressIDplanta+" de la planta: "+button.textContent);
+      console.log("ExpressId: " + expressIDplanta + " de la planta: " + button.textContent);
+  
       
-      try {
-        const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
-    
-        // recursiva para buscar los elementos hijos en la estructura 
-        function findElementsInChildren(node) {
-          for (const childNode of node.children) {
-            if (!elementsArray.includes(childNode.expressID)) {
-              elementsArray.push(childNode.expressID);
-            }
-            findElementsInChildren(childNode);
+  
+      //comprueba si algun btn2D está pulsado
+      var container = document.querySelector('.button-container');
+      var elementos = container.querySelectorAll('.activoBtn2DPlanta');
+  
+      // Verificar si alguno de los elementos contiene la clase deseada
+      var contieneClase = false;
+      for (var i = 0; i < elementos.length; i++) {
+          if (elementos[i].classList.contains('activoBtn2DPlanta')) {
+              contieneClase = true;
+              break;
           }
+      }
+  
+      if (contieneClase) {
+          viewer.context.ifcCamera.toggleProjection();
+          viewer.context.ifcCamera.cameraControls.setLookAt(posicionInicial.x, posicionInicial.y, posicionInicial.z, centro.x, centro.y, centro.z);
+      }
+  
+      //elementsArray = elementsArraysByPlan[currentPlan.name] || []; // Obtén el array existente o recién creado
+      try {
+          const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
+  
+          function findElementsInChildren(node) {
+              for (const childNode of node.children) {
+                  if (!elementsArray.includes(childNode.expressID)) {
+                      elementsArray.push(childNode.expressID);
+                  }
+                  findElementsInChildren(childNode);
+              }
+          }
+          function removeElementsInChildren(node) {
+            for (const childNode of node.children) {
+                // Eliminar el expressID del nodo hijo actual del array
+                const index = elementsArray.indexOf(childNode.expressID);
+                if (index !== -1) {
+                    elementsArray.splice(index, 1);
+                }
+                removeElementsInChildren(childNode);
+            }
         }
-        // busca el nodo de la planta deseada en la estructura 
-        const plantaNode = findNodeWithExpressID(ifcProject, expressIDplanta);
-    
-        
-        if (plantaNode) {
-          
-          findElementsInChildren(plantaNode);
-          hideAllItems(viewer, idsTotal );
-          showAllItems(viewer, elementsArray);
-          console.log(elementsArray);
-
-          const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
+  
+          // busca el nodo de la planta deseada en la estructura 
+          const plantaNode = findNodeWithExpressID(ifcProject, expressIDplanta);
+          console.log(plantaNode)
+  
+          if (plantaNode) {
+              // if (elementsArraysByPlan[currentPlan.name]) {
+              //     const elementsArray = elementsArraysByPlan[currentPlan.name];
+              //     if (elementsArray.length > 0) {
+              //         console.log(`Array existente en memoria ${currentPlan.name}:`, elementsArray);
+              //     } else {
+              //         console.log(`Array existente en memoria ${currentPlan.name}, pero está vacío.`);
+              //         findElementsInChildren(plantaNode);
+              //     }
+              // } else {
+              //     console.log(`No existe un array en memoria para ${currentPlan.name}.`);
+              //     findElementsInChildren(plantaNode);
+              // }
+              hideAllItems(viewer, idsTotal);
+              // Si el botón ya está activo, desactívalo
+             // findElementsInChildren(plantaNode);
+              if (button.classList.contains('activo')) {
+                button.classList.remove('activo');
+                removeElementsInChildren(plantaNode);
+              }
+              else{
+                button.classList.add('activo');
+                findElementsInChildren(plantaNode);
+              }
+              showAllItems(viewer, elementsArray);
+  
+              const btnLabelPlantasList = document.querySelectorAll('.btnLabelPlanta');
               btnLabelPlantasList.forEach((btnLabel) => {
-              btnLabel.style.visibility = 'hidden';
-          });
-
-          btnLabelPlantas.style.visibility = 'visible';
-
-          const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
+                  btnLabel.style.visibility = 'hidden';
+              });
+  
+              btnLabelPlantas.style.visibility = 'visible';
+              const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
               btn2DPlantasList.forEach((btn2D) => {
                   btn2D.style.visibility = 'hidden';
                   btn2D.classList.remove('activoBtn2DPlanta');
               });
-
-          btn2DPlantas.style.visibility = 'visible';
-          
-        } else {
-          console.log('No se encontró el nodo de la planta');
-        }
-      } catch (error) {
-        console.log('Error al obtener la estructura espacial:', error);
-      }
-
   
-
-      const activeButton = containerForPlans.querySelector('button.activo');
-      if (activeButton) {
-        activeButton.classList.remove('activo');
-        const correspondingBtnLabel = activeButton.nextElementSibling;
-        if (correspondingBtnLabel.classList.contains('btnLabelPlanta')) {
-          // correspondingBtnLabel.style.visibility = 'hidden';
-          correspondingBtnLabel.classList.remove('activoBtnLabelPlanta'); // Remover la clase 'activoBtnLabelPlanta' cuando se oculta
-          
-        }
+              btn2DPlantas.style.visibility = 'visible';
+  
+          } else {
+              console.log('No se encontró el nodo de la planta');
+          }
+      } catch (error) {
+          console.log('Error al obtener la estructura espacial:', error);
       }
-      button.classList.add('activo');
-    };
+  
+     // button.classList.add('activo');
+  };
 
     btnLabelPlantas.onclick = async () => {
       const activeBtnLabelPlanta = document.querySelector('.btnLabelPlanta.activoBtnLabelPlanta');
@@ -444,19 +482,25 @@ async function getPlantas(model) {
     
   }
   
-    const button = document.createElement('button');
-    containerForPlans.appendChild(button);
-    button.textContent = 'Exit floorplans';
-    button.onclick = () => {
-      hideAllItems(viewer, idsTotal );
-      showAllItems(viewer, idsTotal);
-      ocultarLabels();
-      const activeButton = containerForPlans.querySelector('button.activo');
-      if (activeButton) {
-        activeButton.classList.remove('activo');
-      }
-      ocultaBtnRemoveClass();
-    };
+  const button = document.createElement('button');
+  containerForPlans.appendChild(button);
+  button.textContent = 'Exit floorplans';
+  button.onclick = () => {
+
+    hideAllItems(viewer, idsTotal );
+    showAllItems(viewer, idsTotal);
+    ocultarLabels();
+    const activeButtons = containerForPlans.querySelectorAll('button.activo');
+    activeButtons.forEach((activeButton) => {
+      activeButton.classList.remove('activo');
+    });
+    ocultaBtnRemoveClass();
+    const buttonContainer = document.getElementById('button-container');
+    buttonContainer.style.visibility = 'hiden';
+    const btnLateralPlantas = document.getElementById('btn-lateral-plantas');
+
+    btnLateralPlantas.click();
+  };
 }
 
 function ocultaBtnRemoveClass(){
@@ -471,7 +515,7 @@ const btn2DPlantasList = document.querySelectorAll('.btn2DPlanta');
     btn2D.style.visibility = 'hidden';
     btn2D.classList.remove('activoBtn2DPlanta');  
 });
-viewer.context.ifcCamera.cameraControls.setLookAt(posicionInicial.x, posicionInicial.y, posicionInicial.z, 0, 0, 0);
+//viewer.context.ifcCamera.cameraControls.setLookAt(posicionInicial.x, posicionInicial.y, posicionInicial.z, 0, 0, 0);
 
 }
 
@@ -640,7 +684,7 @@ function replaceOriginalBySubset(viewer) {
   // items.pickableIfcModels = items.pickableIfcModels.filter(s=>s !== subset)
 }
 
-//TODO: onclick
+//TODO: onclick en visor
 container.onclick = async () => {
   const found = await viewer.IFC.selector.pickIfcItem(false);
 
@@ -990,6 +1034,7 @@ floorplanButton.onclick = () => {
     floorplansActive = !floorplansActive;
     floorplanButton.classList.remove('active');
     floorplansButtonContainer.classList.remove('visible');
+    elementsArray=[];
     
     hideAllItems(viewer, idsTotal );
       showAllItems(viewer, idsTotal);
@@ -1037,6 +1082,7 @@ let btnEstadoMontaje = document.getElementById('estadoPieza');
 let subsetRojo=null;
 let subsetVerde=null;
 
+//TODO: clic en BTN ESTADO PIEZA
 btnEstadoMontaje.onclick=async()=>{
   btnEstadoMontaje.classList.toggle('active');
   viewer.IFC.selector.unpickIfcItems();
@@ -1599,7 +1645,7 @@ function generaBotonesNumCamion(camionesUnicos) {
           console.log("Creando subconjuntoRojo: " +elVisiCheckNoMontados, elVisiCheckMontados.length);
           console.log("Creando subconjuntoVerde: " +elVisiCheckMontados, elVisiCheckMontados.length);
           subsetVerde=getWholeSubsetColorVerde(viewer, model, elVisiCheckMontados);
-          replaceOriginalBySubset(viewer);
+           (viewer);
           subsetRojo=getWholeSubsetColorRojo(viewer, model, elVisiCheckNoMontados);
           replaceOriginalBySubset(viewer);
             
